@@ -1,0 +1,293 @@
+<?php
+/**
+ * FACTURADOR-PCCURICO
+ * Installation Wizard - Full Logic
+ */
+
+session_start();
+error_reporting(E_ALL);
+ini_set('display_errors', 1);
+
+define('ROOT_PATH', dirname(__DIR__));
+
+$step = isset($_GET['step']) ? (int)$_GET['step'] : 1;
+$error = null;
+$success = null;
+
+// Requisitos del sistema
+$requirements = [
+    'php_version' => ['name' => 'PHP Version (>= 8.0)', 'check' => version_compare(PHP_VERSION, '8.0.0', '>='), 'value' => PHP_VERSION],
+    'pdo' => ['name' => 'PDO Extension', 'check' => extension_loaded('pdo'), 'value' => extension_loaded('pdo') ? 'Installed' : 'Missing'],
+    'mbstring' => ['name' => 'Mbstring Extension', 'check' => extension_loaded('mbstring'), 'value' => extension_loaded('mbstring') ? 'Installed' : 'Missing'],
+    'storage_writable' => ['name' => 'Storage Writable', 'check' => is_writable(ROOT_PATH . '/storage'), 'value' => is_writable(ROOT_PATH . '/storage') ? 'Yes' : 'No'],
+    'config_writable' => ['name' => 'Config Writable', 'check' => is_writable(ROOT_PATH . '/config'), 'value' => is_writable(ROOT_PATH . '/config') ? 'Yes' : 'No']
+];
+
+// Procesamiento de pasos
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    if ($step === 2 && isset($_POST['db_host'])) {
+        // Guardar datos de DB en sesión temporalmente
+        $_SESSION['db_config'] = [
+            'host' => $_POST['db_host'],
+            'name' => $_POST['db_name'],
+            'user' => $_POST['db_user'],
+            'pass' => $_POST['db_pass']
+        ];
+
+        // Probar conexión a la base de datos pre-creada (ej. en cPanel)
+        try {
+            $dsn = "mysql:host={$_POST['db_host']};dbname={$_POST['db_name']};charset=utf8mb4";
+            $pdo = new PDO($dsn, $_POST['db_user'], $_POST['db_pass']);
+            $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+            
+            header('Location: install.php?step=3');
+            exit;
+        } catch (PDOException $e) {
+            $error = "Error de conexión: " . $e->getMessage();
+            $step = 2; // Volver al paso 2
+        }
+    }
+
+    if ($step === 3) {
+        // Ejecutar Migraciones
+        try {
+            $db = $_SESSION['db_config'];
+            $pdo = new PDO("mysql:host={$db['host']};dbname={$db['name']};charset=utf8mb4", $db['user'], $db['pass']);
+            $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+
+            $sql = "
+                CREATE TABLE IF NOT EXISTS `clients` (
+                    `id` INT AUTO_INCREMENT PRIMARY KEY,
+                    `name` VARCHAR(255) NOT NULL,
+                    `rut` VARCHAR(20) UNIQUE NOT NULL,
+                    `email` VARCHAR(255),
+                    `phone` VARCHAR(50),
+                    `address` TEXT,
+                    `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                ) ENGINE=InnoDB;
+
+                CREATE TABLE IF NOT EXISTS `products` (
+                    `id` INT AUTO_INCREMENT PRIMARY KEY,
+                    `name` VARCHAR(255) NOT NULL,
+                    `sku` VARCHAR(100) UNIQUE,
+                    `price` DECIMAL(15,2) NOT NULL,
+                    `tax_rate` DECIMAL(5,2) DEFAULT 0.19,
+                    `stock` INT DEFAULT 0,
+                    `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                ) ENGINE=InnoDB;
+
+                CREATE TABLE IF NOT EXISTS `invoices` (
+                    `id` INT AUTO_INCREMENT PRIMARY KEY,
+                    `client_id` INT,
+                    `number` VARCHAR(50) UNIQUE NOT NULL,
+                    `status` ENUM('draft', 'sent', 'paid', 'canceled') DEFAULT 'draft',
+                    `subtotal` DECIMAL(15,2) NOT NULL,
+                    `tax` DECIMAL(15,2) NOT NULL,
+                    `total` DECIMAL(15,2) NOT NULL,
+                    `due_date` DATE DEFAULT NULL,
+                    `token` VARCHAR(64) UNIQUE,
+                    `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    FOREIGN KEY (`client_id`) REFERENCES `clients`(`id`)
+                ) ENGINE=InnoDB;
+
+                CREATE TABLE IF NOT EXISTS `invoice_items` (
+                    `id` INT AUTO_INCREMENT PRIMARY KEY,
+                    `invoice_id` INT,
+                    `product_id` INT,
+                    `qty` INT NOT NULL,
+                    `price` DECIMAL(15,2) NOT NULL,
+                    `total` DECIMAL(15,2) NOT NULL,
+                    FOREIGN KEY (`invoice_id`) REFERENCES `invoices`(`id`) ON DELETE CASCADE,
+                    FOREIGN KEY (`product_id`) REFERENCES `products`(`id`)
+                ) ENGINE=InnoDB;
+
+                CREATE TABLE IF NOT EXISTS `payments` (
+                    `id` INT AUTO_INCREMENT PRIMARY KEY,
+                    `invoice_id` INT,
+                    `amount` DECIMAL(15,2) NOT NULL,
+                    `method` VARCHAR(50) NOT NULL,
+                    `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    FOREIGN KEY (`invoice_id`) REFERENCES `invoices`(`id`) ON DELETE CASCADE
+                ) ENGINE=InnoDB;
+
+                CREATE TABLE IF NOT EXISTS `settings` (
+                    `key` VARCHAR(100) PRIMARY KEY,
+                    `value` TEXT
+                ) ENGINE=InnoDB;
+
+                CREATE TABLE IF NOT EXISTS `users` (
+                    `id` INT AUTO_INCREMENT PRIMARY KEY,
+                    `email` VARCHAR(255) UNIQUE NOT NULL,
+                    `password` VARCHAR(255) NOT NULL,
+                    `name` VARCHAR(255),
+                    `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                ) ENGINE=InnoDB;
+            ";
+
+            $pdo->exec($sql);
+            header('Location: install.php?step=4');
+            exit;
+        } catch (Exception $e) {
+            $error = "Error al crear tablas: " . $e->getMessage();
+            $step = 3;
+        }
+    }
+
+    if ($step === 4 && isset($_POST['biz_name'])) {
+        // Guardar configuración de negocio en sesión
+        $_SESSION['business_config'] = $_POST;
+        header('Location: install.php?step=5');
+        exit;
+    }
+
+    if ($step === 5 && isset($_POST['admin_email'])) {
+        // Crear usuario admin y finalizar
+        try {
+            $db = $_SESSION['db_config'];
+            $biz = $_SESSION['business_config'];
+            $pdo = new PDO("mysql:host={$db['host']};dbname={$db['name']};charset=utf8mb4", $db['user'], $db['pass']);
+            
+            // Insertar admin
+            $passHash = password_hash($_POST['admin_pass'], PASSWORD_BCRYPT);
+            $stmt = $pdo->prepare("INSERT INTO users (email, password, name) VALUES (?, ?, ?)");
+            $stmt->execute([$_POST['admin_email'], $passHash, $_POST['admin_name']]);
+
+            // Insertar settings de negocio
+            $stmt = $pdo->prepare("INSERT INTO settings (`key`, `value`) VALUES (?, ?)");
+            foreach ($biz as $key => $val) {
+                $stmt->execute([$key, $val]);
+            }
+
+            // Crear archivo lock
+            file_put_contents(ROOT_PATH . '/storage/installed.lock', date('Y-m-d H:i:s'));
+
+            // Crear archivo config/database.php
+            $dbConfigContent = "<?php\nreturn " . var_export($db, true) . ";";
+            file_put_contents(ROOT_PATH . '/config/database.php', $dbConfigContent);
+
+            $success = "Instalación completada exitosamente.";
+            $step = 6;
+        } catch (Exception $e) {
+            $error = "Error final: " . $e->getMessage();
+        }
+    }
+}
+
+?>
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Instalación | FACTURADOR-PCCURICO</title>
+    <link rel="stylesheet" href="assets/css/style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;800&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="wizard-container">
+        <div class="glass-card">
+            <h1>Facturador PCCurico</h1>
+            <p class="subtitle">Asistente de configuración del sistema</p>
+            
+            <div class="step-indicator">
+                <?php for($i=1; $i<=6; $i++): ?>
+                    <div class="step-dot <?php echo $i <= $step ? 'active' : ''; ?>"></div>
+                <?php endfor; ?>
+            </div>
+
+            <?php if ($error): ?>
+                <div style="background: rgba(239, 68, 68, 0.1); border: 1px solid #ef4444; padding: 15px; border-radius: 12px; margin-bottom: 20px; color: #fca5a5; font-size: 0.9rem;">
+                    <?php echo $error; ?>
+                </div>
+            <?php endif; ?>
+
+            <?php if ($step === 1): ?>
+                <div>
+                    <h2>Paso 1: Requisitos</h2>
+                    <ul class="check-list" style="margin-top: 20px;">
+                        <?php foreach ($requirements as $req): ?>
+                            <li class="check-item">
+                                <div class="check-icon <?php echo $req['check'] ? 'ok' : 'fail'; ?>"><?php echo $req['check'] ? '✓' : '✗'; ?></div>
+                                <div style="flex: 1;"><strong><?php echo $req['name']; ?></strong><br><small><?php echo $req['value']; ?></small></div>
+                            </li>
+                        <?php endforeach; ?>
+                    </ul>
+                    <form action="install.php?step=2" method="POST">
+                        <button type="submit" class="btn-primary">Continuar a Base de Datos</button>
+                    </form>
+                </div>
+            <?php endif; ?>
+
+            <?php if ($step === 2): ?>
+                <div>
+                    <h2>Paso 2: Base de Datos</h2>
+                    <form action="install.php?step=2" method="POST">
+                        <div class="form-group"><label>Host</label><input type="text" name="db_host" value="localhost"></div>
+                        <div class="form-group"><label>Nombre DB</label><input type="text" name="db_name" required></div>
+                        <div class="form-group"><label>Usuario</label><input type="text" name="db_user" required></div>
+                        <div class="form-group"><label>Contraseña</label><input type="password" name="db_pass"></div>
+                        <button type="submit" class="btn-primary">Conectar y Crear DB</button>
+                    </form>
+                </div>
+            <?php endif; ?>
+
+            <?php if ($step === 3): ?>
+                <div style="text-align: center;">
+                    <h2>Paso 3: Tablas y Migraciones</h2>
+                    <p style="margin: 20px 0; color: var(--text-muted);">Estamos listos para preparar la estructura de datos para clientes, productos y facturación.</p>
+                    <form action="install.php?step=3" method="POST">
+                        <button type="submit" class="btn-primary">Ejecutar Migraciones Ahora</button>
+                    </form>
+                </div>
+            <?php endif; ?>
+
+            <?php if ($step === 4): ?>
+                <div>
+                    <h2>Paso 4: Datos del Negocio & Webpay</h2>
+                    <form action="install.php?step=4" method="POST">
+                        <h3 style="font-size: 1rem; color: var(--text-muted); margin-bottom: 15px; margin-top: 10px;">Perfil de la Empresa</h3>
+                        <div class="form-group"><label>Nombre Empresa</label><input type="text" name="biz_name" required></div>
+                        <div class="form-group"><label>RUT Empresa</label><input type="text" name="biz_rut" placeholder="76.123.456-7"></div>
+                        <div class="form-group"><label>Dirección</label><input type="text" name="biz_address"></div>
+                        <div class="form-group"><label>Giro</label><input type="text" name="biz_giro"></div>
+                        
+                        <h3 style="font-size: 1rem; color: var(--text-muted); margin-bottom: 15px; margin-top: 30px;">Pasarela de Pago (Transbank Webpay Plus REST)</h3>
+                        <div class="form-group">
+                            <label>Entorno</label>
+                            <select name="webpay_env" class="form-control" style="width: 100%; padding: 12px; background: rgba(15, 23, 42, 0.5); color: white; border: 1px solid var(--glass-border); border-radius: 8px;">
+                                <option value="integration">Integración (Pruebas)</option>
+                                <option value="production">Producción</option>
+                            </select>
+                        </div>
+                        <div class="form-group"><label>Código de Comercio (Commerce Code)</label><input type="text" name="webpay_cc" placeholder="597055555532"></div>
+                        <div class="form-group"><label>API Key (Secret)</label><input type="text" name="webpay_key" placeholder="579B532A7440BB0C9079DED94D31EA1615BACEB56610332264630D42D0A36B1C"></div>
+                        
+                        <button type="submit" class="btn-primary" style="margin-top: 20px;">Siguiente</button>
+                    </form>
+                </div>
+            <?php endif; ?>
+
+            <?php if ($step === 5): ?>
+                <div>
+                    <h2>Paso 5: Usuario Administrador</h2>
+                    <form action="install.php?step=5" method="POST">
+                        <div class="form-group"><label>Nombre Completo</label><input type="text" name="admin_name" required></div>
+                        <div class="form-group"><label>Email</label><input type="email" name="admin_email" required></div>
+                        <div class="form-group"><label>Contraseña</label><input type="password" name="admin_pass" required></div>
+                        <button type="submit" class="btn-primary">Finalizar Instalación</button>
+                    </form>
+                </div>
+            <?php endif; ?>
+
+            <?php if ($step === 6): ?>
+                <div style="text-align: center;">
+                    <div class="check-icon ok" style="width: 60px; height: 60px; margin: 0 auto 20px; font-size: 2rem;">✓</div>
+                    <h2>¡Instalación Completada!</h2>
+                    <p style="margin: 20px 0; color: var(--text-muted);">El sistema se ha configurado correctamente. Por seguridad, el instalador ha sido bloqueado.</p>
+                    <a href="index.php" class="btn-primary" style="text-decoration: none; display: block;">Ir al Dashboard</a>
+                </div>
+            <?php endif; ?>
+        </div>
+    </div>
+</body>
+</html>

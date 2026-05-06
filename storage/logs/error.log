@@ -1,0 +1,7 @@
+[2026-05-04 04:48:52] ERROR: Uncaught Exception: Database configuration not found. {"file":"\/home\/pccurico\/facturador.pccurico.cl\/Core\/Database.php","line":19}
+[2026-05-04 04:49:43] ERROR: Uncaught Exception: Database configuration not found. {"file":"\/home\/pccurico\/facturador.pccurico.cl\/Core\/Database.php","line":19}
+[2026-05-04 05:05:37] ERROR: Uncaught Exception: Database configuration not found. {"file":"\/home\/pccurico\/facturador.pccurico.cl\/Core\/Database.php","line":19}
+[2026-05-04 05:08:13] ERROR: Uncaught Exception: Database configuration not found. {"file":"\/home\/pccurico\/facturador.pccurico.cl\/Core\/Database.php","line":19}
+[2026-05-05 22:04:32] ERROR: Uncaught Exception: ini_set(): Session ini settings cannot be changed when a session is active {"file":"\/home\/pccurico\/facturador.pccurico.cl\/bootstrap\/app.php","line":60}
+[2026-05-05 22:04:42] ERROR: Uncaught Exception: ini_set(): Session ini settings cannot be changed when a session is active {"file":"\/home\/pccurico\/facturador.pccurico.cl\/bootstrap\/app.php","line":60}
+[2026-05-05 22:04:43] ERROR: Uncaught Exception: ini_set(): Session ini settings cannot be changed when a session is active {"file":"\/home\/pccurico\/facturador.pccurico.cl\/bootstrap\/app.php","line":60}
