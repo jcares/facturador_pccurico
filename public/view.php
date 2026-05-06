@@ -10,15 +10,16 @@ use Core\Database;
 
 $token = $_GET['token'] ?? null;
 
-if (!$token) {
-    die("Enlace inválido.");
+if (!$token || !is_string($token) || strlen($token) !== 32) {
+    http_response_code(400);
+    echo 'Enlace inválido.';
+    exit;
 }
 
 $db = Database::getInstance();
 
-// Fetch Invoice by token
 $stmt = $db->prepare("
-    SELECT i.*, c.name as client_name, c.rut as client_rut, c.address as client_address, c.email as client_email
+    SELECT i.*, COALESCE(c.business_name, c.name) as client_name, c.rut as client_rut, c.address as client_address, c.email as client_email
     FROM invoices i 
     LEFT JOIN clients c ON i.client_id = c.id 
     WHERE i.token = ?
@@ -27,10 +28,11 @@ $stmt->execute([$token]);
 $invoice = $stmt->fetch();
 
 if (!$invoice) {
-    die("Documento no encontrado o expirado.");
+    http_response_code(404);
+    echo 'Documento no encontrado o expirado.';
+    exit;
 }
 
-// Fetch Items
 $stmtItems = $db->prepare("
     SELECT it.*, p.name as product_name, p.sku as product_sku 
     FROM invoice_items it 
@@ -40,13 +42,19 @@ $stmtItems = $db->prepare("
 $stmtItems->execute([$invoice['id']]);
 $invoice['items'] = $stmtItems->fetchAll();
 
-// Fetch Payments
 $stmtPay = $db->prepare("SELECT SUM(amount) as paid FROM payments WHERE invoice_id = ?");
 $stmtPay->execute([$invoice['id']]);
 $paid = $stmtPay->fetch()['paid'] ?? 0;
 $balance = $invoice['total'] - $paid;
+$currency = strtoupper($invoice['currency'] ?? 'CLP');
+$exchangeRate = (float)($invoice['exchange_rate'] ?? 1);
+$money = function ($amount) use ($currency) {
+    $decimals = $currency === 'CLP' ? 0 : 2;
+    $prefix = $currency === 'CLP' ? '$' : $currency . ' ';
+    return $prefix . number_format((float)$amount, $decimals, ',', '.');
+};
+$webpayAmountClp = $currency === 'CLP' ? ceil($balance) : ceil($balance * max($exchangeRate, 1));
 
-// Get Business Settings
 $stmtSettings = $db->query("SELECT * FROM settings");
 $settingsRaw = $stmtSettings->fetchAll();
 $settings = [];
@@ -96,7 +104,10 @@ foreach($settingsRaw as $s) {
 
         <?php if ($balance > 0): ?>
             <div style="background: white; border-radius: 12px; padding: 20px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); margin-bottom: 20px; border-left: 5px solid #e0245e;">
-                <h3 style="margin-bottom: 15px; color: #334155;">Pago Pendiente: $<?= number_format($balance, 0, ',', '.') ?></h3>
+                <h3 style="margin-bottom: 8px; color: #334155;">Pago Pendiente: <?= $money($balance) ?></h3>
+                <?php if ($currency !== 'CLP'): ?>
+                    <p style="color: #64748b; margin-bottom: 15px;">Webpay cobrara el equivalente en CLP: $<?= number_format($webpayAmountClp, 0, ',', '.') ?></p>
+                <?php endif; ?>
                 <!-- Aquí enviaremos el formulario a webpay_init.php -->
                 <form action="webpay_init.php" method="POST">
                     <input type="hidden" name="token" value="<?= htmlspecialchars($token) ?>">
@@ -158,8 +169,8 @@ foreach($settingsRaw as $s) {
                                 <div style="font-size: 0.8rem; color: #94a3b8;"><?= htmlspecialchars($item['product_sku'] ?? '') ?></div>
                             </td>
                             <td style="padding: 15px 0; text-align: center; color: #64748b;"><?= $item['qty'] ?></td>
-                            <td style="padding: 15px 0; text-align: right; color: #64748b;">$<?= number_format($item['price'], 0, ',', '.') ?></td>
-                            <td style="padding: 15px 0; text-align: right; font-weight: 500;">$<?= number_format($item['total'], 0, ',', '.') ?></td>
+                            <td style="padding: 15px 0; text-align: right; color: #64748b;"><?= $money($item['price']) ?></td>
+                            <td style="padding: 15px 0; text-align: right; font-weight: 500;"><?= $money($item['total']) ?></td>
                         </tr>
                     <?php endforeach; ?>
                 </tbody>
@@ -169,15 +180,15 @@ foreach($settingsRaw as $s) {
                 <div style="width: 300px;">
                     <div style="display: flex; justify-content: space-between; margin-bottom: 10px; color: #64748b;">
                         <span>Subtotal Neto</span>
-                        <span>$<?= number_format($invoice['subtotal'], 0, ',', '.') ?></span>
+                        <span><?= $money($invoice['subtotal']) ?></span>
                     </div>
                     <div style="display: flex; justify-content: space-between; margin-bottom: 10px; color: #64748b;">
                         <span>IVA (19%)</span>
-                        <span>$<?= number_format($invoice['tax'], 0, ',', '.') ?></span>
+                        <span><?= $money($invoice['tax']) ?></span>
                     </div>
                     <div style="display: flex; justify-content: space-between; margin-top: 10px; padding-top: 10px; border-top: 2px solid #e2e8f0; font-size: 1.2rem; font-weight: 800; color: #0f172a;">
                         <span>TOTAL</span>
-                        <span>$<?= number_format($invoice['total'], 0, ',', '.') ?></span>
+                        <span><?= $money($invoice['total']) ?></span>
                     </div>
                 </div>
             </div>

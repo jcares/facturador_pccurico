@@ -14,10 +14,16 @@ if (!Auth::check()) {
 $_POST = \Core\Security::sanitizeInput($_POST);
 
 $controller = new PaymentController();
-$action = $_GET['action'] ?? 'create';
+$action = $_GET['action'] ?? 'index';
+
+if ($action === 'index' && isset($_GET['invoice_id'])) {
+    $action = 'create';
+}
 
 if ($action === 'store') {
     $controller->store();
-} else {
+} elseif ($action === 'create') {
     $controller->create();
+} else {
+    $controller->index();
 }

@@ -40,7 +40,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             <p class="subtitle">Ingresa a tu facturador</p>
 
             <?php if ($error): ?>
-                <div style="background: rgba(239, 68, 68, 0.1); border: 1px solid #ef4444; padding: 15px; border-radius: 12px; margin-bottom: 20px; color: #fca5a5; font-size: 0.9rem;">
+                <div class="alert alert-error">
                     <?php echo $error; ?>
                 </div>
             <?php endif; ?>

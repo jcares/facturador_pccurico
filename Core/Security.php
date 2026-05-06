@@ -19,10 +19,15 @@ class Security
         return hash_equals($_SESSION['csrf_token'], $token);
     }
 
+    public static function validateCsrfToken($token)
+    {
+        return self::checkCsrfToken($token);
+    }
+
     public static function csrfField()
     {
         $token = self::generateCsrfToken();
-        return '<input type="hidden" name="csrf_token" value="' . $token . '">';
+        return '<input type="hidden" name="csrf_token" value="' . htmlspecialchars($token, ENT_QUOTES, 'UTF-8') . '">';
     }
 
     public static function validatePost()
@@ -51,5 +56,33 @@ class Security
             $data = htmlspecialchars(strip_tags(trim($data)), ENT_QUOTES, 'UTF-8');
         }
         return $data;
+    }
+
+    public static function cleanString($value, $maxLength = null)
+    {
+        $value = trim((string)$value);
+        $value = strip_tags($value);
+
+        if ($maxLength !== null) {
+            $value = mb_substr($value, 0, (int)$maxLength);
+        }
+
+        return $value;
+    }
+
+    public static function cleanEmail($value)
+    {
+        $value = trim((string)$value);
+        return filter_var($value, FILTER_VALIDATE_EMAIL) ?: null;
+    }
+
+    public static function cleanDecimal($value, $default = 0)
+    {
+        return is_numeric($value) ? (float)$value : (float)$default;
+    }
+
+    public static function cleanInt($value, $default = 0)
+    {
+        return filter_var($value, FILTER_VALIDATE_INT) !== false ? (int)$value : (int)$default;
     }
 }

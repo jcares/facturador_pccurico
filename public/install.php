@@ -5,6 +5,7 @@
  */
 
 session_start();
+header('Content-Type: text/html; charset=utf-8');
 error_reporting(E_ALL);
 ini_set('display_errors', 1);
 
@@ -13,6 +14,11 @@ define('ROOT_PATH', dirname(__DIR__));
 $step = isset($_GET['step']) ? (int)$_GET['step'] : 1;
 $error = null;
 $success = null;
+
+if (file_exists(ROOT_PATH . '/storage/installed.lock') && $step !== 6) {
+    header('Location: login.php');
+    exit;
+}
 
 // Requisitos del sistema
 $requirements = [
@@ -58,7 +64,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $sql = "
                 CREATE TABLE IF NOT EXISTS `clients` (
                     `id` INT AUTO_INCREMENT PRIMARY KEY,
-                    `name` VARCHAR(255) NOT NULL,
+                    `name` VARCHAR(255) NULL,
+                    `business_name` VARCHAR(255) NULL,
+                    `contact_name` VARCHAR(255) NULL,
                     `rut` VARCHAR(20) UNIQUE NOT NULL,
                     `email` VARCHAR(255),
                     `phone` VARCHAR(50),
@@ -71,8 +79,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     `name` VARCHAR(255) NOT NULL,
                     `sku` VARCHAR(100) UNIQUE,
                     `price` DECIMAL(15,2) NOT NULL,
+                    `currency` VARCHAR(10) DEFAULT 'CLP',
+                    `category_id` INT NULL,
                     `tax_rate` DECIMAL(5,2) DEFAULT 0.19,
                     `stock` INT DEFAULT 0,
+                    `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                ) ENGINE=InnoDB;
+
+                CREATE TABLE IF NOT EXISTS `categories` (
+                    `id` INT AUTO_INCREMENT PRIMARY KEY,
+                    `name` VARCHAR(255) NOT NULL UNIQUE,
                     `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP
                 ) ENGINE=InnoDB;
 
@@ -84,6 +100,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     `subtotal` DECIMAL(15,2) NOT NULL,
                     `tax` DECIMAL(15,2) NOT NULL,
                     `total` DECIMAL(15,2) NOT NULL,
+                    `currency` VARCHAR(10) DEFAULT 'CLP',
+                    `exchange_rate` DECIMAL(15,4) DEFAULT 1,
                     `due_date` DATE DEFAULT NULL,
                     `token` VARCHAR(64) UNIQUE,
                     `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -96,6 +114,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     `product_id` INT,
                     `qty` INT NOT NULL,
                     `price` DECIMAL(15,2) NOT NULL,
+                    `original_price` DECIMAL(15,2) NULL,
+                    `original_currency` VARCHAR(10) NULL,
+                    `exchange_rate` DECIMAL(15,4) DEFAULT 1,
                     `total` DECIMAL(15,2) NOT NULL,
                     FOREIGN KEY (`invoice_id`) REFERENCES `invoices`(`id`) ON DELETE CASCADE,
                     FOREIGN KEY (`product_id`) REFERENCES `products`(`id`)
@@ -105,6 +126,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     `id` INT AUTO_INCREMENT PRIMARY KEY,
                     `invoice_id` INT,
                     `amount` DECIMAL(15,2) NOT NULL,
+                    `currency` VARCHAR(10) DEFAULT 'CLP',
+                    `exchange_rate` DECIMAL(15,4) DEFAULT 1,
                     `method` VARCHAR(50) NOT NULL,
                     `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                     FOREIGN KEY (`invoice_id`) REFERENCES `invoices`(`id`) ON DELETE CASCADE
@@ -112,7 +135,22 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
                 CREATE TABLE IF NOT EXISTS `settings` (
                     `key` VARCHAR(100) PRIMARY KEY,
-                    `value` TEXT
+                    `value` TEXT,
+                    `updated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+                ) ENGINE=InnoDB;
+
+                CREATE TABLE IF NOT EXISTS `exchange_rates` (
+                    `currency` VARCHAR(10) PRIMARY KEY,
+                    `value` DECIMAL(15,4) NOT NULL,
+                    `updated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+                ) ENGINE=InnoDB;
+
+                CREATE TABLE IF NOT EXISTS `credit_notes` (
+                    `id` INT AUTO_INCREMENT PRIMARY KEY,
+                    `invoice_id` INT NOT NULL,
+                    `reason` TEXT,
+                    `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    FOREIGN KEY (`invoice_id`) REFERENCES `invoices`(`id`) ON DELETE CASCADE
                 ) ENGINE=InnoDB;
 
                 CREATE TABLE IF NOT EXISTS `users` (
@@ -125,6 +163,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             ";
 
             $pdo->exec($sql);
+            $seedCategory = $pdo->prepare("INSERT INTO categories (name) SELECT ? WHERE NOT EXISTS (SELECT 1 FROM categories WHERE name = ?)");
+            foreach (['Servicios', 'Hardware', 'Software'] as $categoryName) {
+                $seedCategory->execute([$categoryName, $categoryName]);
+            }
             header('Location: install.php?step=4');
             exit;
         } catch (Exception $e) {
@@ -149,11 +191,21 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             
             // Insertar admin
             $passHash = password_hash($_POST['admin_pass'], PASSWORD_BCRYPT);
-            $stmt = $pdo->prepare("INSERT INTO users (email, password, name) VALUES (?, ?, ?)");
+            $stmt = $pdo->prepare("
+                INSERT INTO users (email, password, name)
+                VALUES (?, ?, ?)
+                ON DUPLICATE KEY UPDATE
+                    password = VALUES(password),
+                    name = VALUES(name)
+            ");
             $stmt->execute([$_POST['admin_email'], $passHash, $_POST['admin_name']]);
 
             // Insertar settings de negocio
-            $stmt = $pdo->prepare("INSERT INTO settings (`key`, `value`) VALUES (?, ?)");
+            $stmt = $pdo->prepare("
+                INSERT INTO settings (`key`, `value`)
+                VALUES (?, ?)
+                ON DUPLICATE KEY UPDATE `value` = VALUES(`value`)
+            ");
             foreach ($biz as $key => $val) {
                 $stmt->execute([$key, $val]);
             }
@@ -183,7 +235,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <link rel="stylesheet" href="assets/css/style.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;800&display=swap" rel="stylesheet">
 </head>
-<body>
+<body class="login-page">
     <div class="wizard-container">
         <div class="glass-card">
             <h1>Facturador PCCurico</h1>

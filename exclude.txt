@@ -1,5 +1,0 @@
-.git\
-.gemini\
-scratch\
-.zip
-build_cpanel.php

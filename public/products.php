@@ -16,8 +16,17 @@ $_POST = \Core\Security::sanitizeInput($_POST);
 $controller = new ProductController();
 $action = $_GET['action'] ?? 'index';
 
-if ($action === 'store') {
-    $controller->store();
-} else {
-    $controller->index();
+switch ($action) {
+    case 'store':
+        $controller->store();
+        break;
+    case 'update':
+        $controller->update();
+        break;
+    case 'delete':
+        $controller->delete();
+        break;
+    default:
+        $controller->index();
+        break;
 }

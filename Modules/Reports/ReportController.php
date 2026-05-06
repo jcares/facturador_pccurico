@@ -21,7 +21,7 @@ class ReportController extends Controller
 
         // Cuentas por cobrar (Facturas no pagadas)
         $stmtAccounts = $db->query("
-            SELECT i.*, c.name as client_name 
+            SELECT i.*, COALESCE(c.business_name, c.name) as client_name 
             FROM invoices i 
             JOIN clients c ON i.client_id = c.id 
             WHERE i.status != 'paid' AND i.status != 'canceled'

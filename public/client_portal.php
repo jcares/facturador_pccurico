@@ -1,0 +1,12 @@
+<?php
+session_start();
+require_once __DIR__ . '/../bootstrap/app.php';
+
+if (!\Core\Auth::check()) {
+    header('Location: login.php');
+    exit;
+}
+
+\Core\View::render('placeholders/client_portal', [
+    'title' => 'Portal de Clientes',
+]);

@@ -4,6 +4,8 @@ namespace Modules\Templates;
 use Core\Controller;
 use Core\Database;
 use Core\View;
+use Core\Logger;
+use Core\Security;
 
 class TemplateController extends Controller
 {
@@ -18,14 +20,22 @@ class TemplateController extends Controller
     {
         $stmt = $this->db->query("SELECT * FROM document_templates ORDER BY type ASC, is_default DESC, name ASC");
         $templates = $stmt->fetchAll();
+        
+        $templates = array_map(function($t) {
+            $t['name'] = htmlspecialchars($t['name']);
+            $t['type'] = htmlspecialchars($t['type']);
+            return $t;
+        }, $templates);
+        
         View::render('templates/index', ['templates' => $templates, 'title' => 'Gestión de Plantillas']);
     }
 
     public function visualEdit()
     {
-        $id = $_GET['id'] ?? null;
-        if (!$id) {
-            header('Location: templates.php');
+        $id = intval($_GET['id'] ?? 0);
+        if ($id <= 0) {
+            http_response_code(404);
+            echo 'ID de plantilla inválido.';
             exit;
         }
 
@@ -34,11 +44,11 @@ class TemplateController extends Controller
         $template = $stmt->fetch();
 
         if (!$template) {
-            header('Location: templates.php');
+            http_response_code(404);
+            echo 'Plantilla no encontrada.';
             exit;
         }
 
-        // Parse config or generate default
         $config = json_decode($template['config_json'] ?? '{}', true) ?: [];
         $blocks = $config['blocks'] ?? [
             ['id' => 'company', 'label' => 'Datos de Empresa', 'position' => 1, 'enabled' => true, 'options' => ['show_logo' => true, 'show_rut' => true, 'logo_width' => 150, 'logo_x' => 0, 'logo_y' => 0]],
@@ -50,33 +60,52 @@ class TemplateController extends Controller
         ];
         $styles = $config['styles'] ?? ['primary_color' => '#3b82f6', 'font_family' => 'sans-serif'];
 
-        // Include the actual view raw without the dashboard layout
         ob_start();
         include __DIR__ . '/../../templates/templates/visual_edit.php';
         $content = ob_get_clean();
-        echo $content;
+
+        View::renderRaw($content, ['title' => 'Editor Visual de Plantilla']);
     }
 
     public function previewVisual()
     {
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            http_response_code(405);
+            echo 'Método no permitido.';
+            return;
+        }
+
         $blocks = $_POST['blocks'] ?? [];
+        if (!is_array($blocks)) {
+            http_response_code(400);
+            echo 'Datos inválidos.';
+            return;
+        }
+
         foreach ($blocks as &$block) {
             $block['enabled'] = isset($block['enabled']);
+            $block['id'] = htmlspecialchars($block['id'] ?? '');
+            $block['label'] = htmlspecialchars($block['label'] ?? '');
         }
+
+        $primaryColor = $_POST['primary_color'] ?? '#3b82f6';
+        if (!preg_match('/^#[0-9a-f]{6}$/i', $primaryColor)) {
+            $primaryColor = '#3b82f6';
+        }
+
         $styles = [
-            'primary_color' => $_POST['primary_color'] ?? '#3b82f6',
-            'font_family' => $_POST['font_family'] ?? 'sans-serif'
+            'primary_color' => $primaryColor,
+            'font_family' => htmlspecialchars($_POST['font_family'] ?? 'sans-serif')
         ];
 
         $config = ['blocks' => $blocks, 'styles' => $styles];
 
-        // Mock data for preview
         $data = [
             'settings' => [
                 'biz_name' => 'Comercializadora Demo SPA',
                 'biz_rut' => '76.123.456-7',
                 'biz_address' => 'Av. Providencia 1234, Santiago',
-                'biz_logo' => '' // Empty triggers fallback to assets/img/logo.png
+                'biz_logo' => ''
             ],
             'client' => [
                 'name' => 'Juan Pérez y Cía Ltda.',
@@ -103,28 +132,69 @@ class TemplateController extends Controller
 
     public function saveVisual()
     {
-        $id = $_GET['id'] ?? null;
-        if (!$id) {
-            header('Location: templates.php');
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            http_response_code(405);
+            echo 'Método no permitido.';
+            return;
+        }
+
+        $id = intval($_GET['id'] ?? 0);
+        if ($id <= 0) {
+            http_response_code(404);
+            echo 'ID de plantilla inválido.';
             exit;
         }
 
+        if (!Security::validateCsrfToken($_POST['csrf_token'] ?? '')) {
+            http_response_code(403);
+            Logger::error("Template CSRF Validation Failed");
+            echo 'Token de seguridad inválido.';
+            return;
+        }
+
         $blocks = $_POST['blocks'] ?? [];
+        if (!is_array($blocks)) {
+            http_response_code(400);
+            echo 'Datos inválidos.';
+            return;
+        }
+
         foreach ($blocks as &$block) {
             $block['enabled'] = isset($block['enabled']);
+            $block['id'] = htmlspecialchars($block['id'] ?? '');
+            $block['label'] = htmlspecialchars($block['label'] ?? '');
         }
+
+        $primaryColor = $_POST['primary_color'] ?? '#3b82f6';
+        if (!preg_match('/^#[0-9a-f]{6}$/i', $primaryColor)) {
+            $primaryColor = '#3b82f6';
+        }
+
         $styles = [
-            'primary_color' => $_POST['primary_color'] ?? '#3b82f6',
-            'font_family' => $_POST['font_family'] ?? 'sans-serif'
+            'primary_color' => $primaryColor,
+            'font_family' => htmlspecialchars($_POST['font_family'] ?? 'sans-serif')
         ];
 
         $config = ['blocks' => $blocks, 'styles' => $styles];
         $json = json_encode($config);
 
-        $stmt = $this->db->prepare("UPDATE document_templates SET config_json = ?, updated_at = NOW() WHERE id = ?");
-        $stmt->execute([$json, $id]);
+        if (json_last_error() !== JSON_ERROR_NONE) {
+            http_response_code(400);
+            Logger::error("Template JSON Encoding Failed: " . json_last_error_msg());
+            echo 'Error al guardar la configuración.';
+            return;
+        }
 
-        header('Location: templates.php?msg=Plantilla+Guardada');
-        exit;
+        try {
+            $stmt = $this->db->prepare("UPDATE document_templates SET config_json = ?, updated_at = NOW() WHERE id = ?");
+            $stmt->execute([$json, $id]);
+            header('Location: templates.php?msg=Plantilla+Guardada');
+            exit;
+        } catch (\Exception $e) {
+            Logger::error("Template Save Failed: " . $e->getMessage());
+            http_response_code(500);
+            echo 'Error al guardar la plantilla.';
+            exit;
+        }
     }
 }

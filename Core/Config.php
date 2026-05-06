@@ -13,6 +13,17 @@ class Config
 
     public static function get($key, $default = null)
     {
+        if (strpos($key, '.') !== false) {
+            $segments = explode('.', $key);
+            $value = self::$settings;
+            foreach ($segments as $segment) {
+                if (!is_array($value) || !array_key_exists($segment, $value)) {
+                    return $default;
+                }
+                $value = $value[$segment];
+            }
+            return $value;
+        }
         return self::$settings[$key] ?? $default;
     }
 }

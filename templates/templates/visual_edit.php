@@ -75,13 +75,6 @@
                                                         <span style="color: var(--primary);" id="logo-x-val-<?= $index ?>"><?= htmlspecialchars($block['options']['logo_x'] ?? '0') ?>px</span>
                                                     </div>
                                                     <input type="range" name="blocks[<?= $index ?>][options][logo_x]" min="-200" max="200" step="5" value="<?= htmlspecialchars($block['options']['logo_x'] ?? '0') ?>" class="modern-range" oninput="document.getElementById('logo-x-val-<?= $index ?>').innerText = this.value + 'px'; updatePreview()">
-                                                    <?php
-                                                    $logo = $data['settings']['biz_logo'] ?? '';
-                                                    $logoWidth = (int)($options['logo_width'] ?? 150);
-                                                    $logoX = (int)($options['logo_x'] ?? 0);
-                                                    $logoY = (int)($options['logo_y'] ?? 0);
-                                                    $logoPath = $logo ? 'uploads/' . $logo : 'assets/img/logo.png';
-                                                    ?>
                                                 </div>
                                                 <div class="range-group">
                                                     <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
@@ -224,4 +217,3 @@
         if (typeof lucide !== 'undefined') lucide.createIcons();
     });
 </script>
-

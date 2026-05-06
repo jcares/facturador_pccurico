@@ -1,4 +1,12 @@
 <div style="display: flex; gap: 30px; max-width: 1000px; margin: 0 auto;">
+    <?php
+        $currency = $invoice['currency'] ?? 'CLP';
+        $money = function ($amount) use ($currency) {
+            $decimals = $currency === 'CLP' ? 0 : 2;
+            $prefix = $currency === 'CLP' ? '$' : $currency . ' ';
+            return $prefix . number_format((float)$amount, $decimals, ',', '.');
+        };
+    ?>
     
     <!-- Resumen Factura y Pagos Previos -->
     <div style="flex: 1; display: flex; flex-direction: column; gap: 20px;">
@@ -6,10 +14,11 @@
             <h3 style="margin-bottom: 15px; font-weight: 700;">Detalle de Factura</h3>
             <p><strong>N° Documento:</strong> <?= htmlspecialchars($invoice['number']) ?></p>
             <p><strong>Cliente:</strong> <?= htmlspecialchars($invoice['client_name']) ?></p>
-            <p><strong>Total Facturado:</strong> $<?= number_format($invoice['total'], 0, ',', '.') ?></p>
+            <p><strong>Total Facturado:</strong> <?= $money($invoice['total']) ?></p>
+            <p><strong>Moneda:</strong> <?= htmlspecialchars($currency) ?></p>
             <div style="margin-top: 15px; padding-top: 15px; border-top: 1px solid var(--glass-border);">
                 <p style="font-size: 1.2rem; font-weight: 800; color: <?= $balance > 0 ? '#ef4444' : '#10b981' ?>;">
-                    Saldo Pendiente: $<?= number_format($balance, 0, ',', '.') ?>
+                    Saldo Pendiente: <?= $money($balance) ?>
                 </p>
             </div>
         </div>
@@ -30,7 +39,7 @@
                         <tr style="border-bottom: 1px solid rgba(255,255,255,0.05);">
                             <td style="padding: 8px 0;"><?= date('d/m/Y', strtotime($p['created_at'])) ?></td>
                             <td style="padding: 8px 0;"><?= htmlspecialchars($p['method']) ?></td>
-                            <td style="padding: 8px 0; text-align: right; font-weight: 600;">$<?= number_format($p['amount'], 0, ',', '.') ?></td>
+                            <td style="padding: 8px 0; text-align: right; font-weight: 600;"><?= $money($p['amount']) ?></td>
                         </tr>
                     <?php endforeach; ?>
                 </tbody>
@@ -55,7 +64,7 @@
                 <input type="hidden" name="invoice_id" value="<?= $invoice['id'] ?>">
                 
                 <div class="form-group">
-                    <label>Monto a Pagar ($)</label>
+                    <label>Monto a Pagar (<?= htmlspecialchars($currency) ?>)</label>
                     <input type="number" step="0.01" name="amount" value="<?= $balance ?>" max="<?= $balance ?>" required class="form-control" style="width: 100%; padding: 12px; background: rgba(15, 23, 42, 0.5); color: white; border: 1px solid var(--glass-border); border-radius: 8px; font-size: 1.2rem; font-weight: bold; text-align: right;">
                 </div>
                 

@@ -1,15 +1,26 @@
 <IfModule mod_rewrite.c>
     RewriteEngine On
 
-    # Si el archivo o carpeta existe en /public/, servirlo directamente
-    RewriteCond %{DOCUMENT_ROOT}/public/$1 -f [OR]
-    RewriteCond %{DOCUMENT_ROOT}/public/$1 -d
-    RewriteRule ^(.*)$ /public/$1 [L,QSA]
+    # Bloquear acceso web directo a codigo, configuracion, logs, backups y artefactos sensibles.
+    RewriteRule ^(\.env|\.env\..*|composer\.(json|lock)|package(-lock)?\.json|build\.ps1|cpanel_release\.zip)$ - [F,L,NC]
+    RewriteRule ^(app|bootstrap|config|Core|Modules|routes|storage|templates)(/|$) - [F,L,NC]
+    RewriteRule (^|/)(error\.log|installed\.lock|.*\.(sql|sqlite|bak|backup|zip|tar|gz|env|ini|log))$ - [F,L,NC]
 
-    # Redirigir todo lo demás a public/index.php o public/install.php
-    RewriteCond %{REQUEST_URI} !^/public/
-    RewriteRule ^(.*)$ /public/$1 [L,QSA]
+    # Si el archivo o carpeta existe en /public/, servirlo directamente
+    RewriteCond %{REQUEST_FILENAME} -f [OR]
+    RewriteCond %{REQUEST_FILENAME} -d
+    RewriteRule ^ - [L]
+
+    # Redirigir todo lo demas a public/index.php o public/install.php
+    RewriteRule ^(.*)$ public/$1 [L,QSA]
 </IfModule>
+
+# Forzar UTF-8 en HTML y assets de texto para evitar mojibake en navegadores/proxies.
+AddDefaultCharset UTF-8
+AddType "text/html; charset=UTF-8" .html .htm .php
+AddType "text/css; charset=UTF-8" .css
+AddType "text/javascript; charset=UTF-8" .js
+AddType "application/json; charset=UTF-8" .json
 
 # Deshabilitar listado de directorios
 Options -Indexes

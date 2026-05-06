@@ -1,3 +1,11 @@
+<?php
+$currency = $invoice['currency'] ?? 'CLP';
+$money = function ($amount) use ($currency) {
+    $decimals = $currency === 'CLP' ? 0 : 2;
+    $prefix = $currency === 'CLP' ? '$' : $currency . ' ';
+    return $prefix . number_format((float)$amount, $decimals, ',', '.');
+};
+?>
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -100,6 +108,10 @@
                 <?php if(!empty($invoice['due_date'])): ?>
                     <p>Fecha de Vencimiento: <?= date('d/m/Y', strtotime($invoice['due_date'])) ?></p>
                 <?php endif; ?>
+                <p>Moneda: <?= htmlspecialchars($currency) ?></p>
+                <?php if($currency !== 'CLP' && !empty($invoice['exchange_rate'])): ?>
+                    <p>Tipo de cambio: $<?= number_format((float)$invoice['exchange_rate'], 0, ',', '.') ?></p>
+                <?php endif; ?>
             </div>
         </div>
 
@@ -128,8 +140,8 @@
                         <td><?= htmlspecialchars($item['product_sku'] ?? 'N/A') ?></td>
                         <td><?= htmlspecialchars($item['product_name'] ?? 'Producto Eliminado') ?></td>
                         <td class="text-center"><?= $item['qty'] ?></td>
-                        <td class="text-right">$<?= number_format($item['price'], 0, ',', '.') ?></td>
-                        <td class="text-right">$<?= number_format($item['total'], 0, ',', '.') ?></td>
+                        <td class="text-right"><?= $money($item['price']) ?></td>
+                        <td class="text-right"><?= $money($item['total']) ?></td>
                     </tr>
                 <?php endforeach; ?>
             </tbody>
@@ -139,15 +151,15 @@
             <table>
                 <tr>
                     <th>Subtotal (Neto):</th>
-                    <td>$<?= number_format($invoice['subtotal'], 0, ',', '.') ?></td>
+                    <td><?= $money($invoice['subtotal']) ?></td>
                 </tr>
                 <tr>
                     <th>IVA (19%):</th>
-                    <td>$<?= number_format($invoice['tax'], 0, ',', '.') ?></td>
+                    <td><?= $money($invoice['tax']) ?></td>
                 </tr>
                 <tr class="total">
                     <th>TOTAL A PAGAR:</th>
-                    <td>$<?= number_format($invoice['total'], 0, ',', '.') ?></td>
+                    <td><?= $money($invoice['total']) ?></td>
                 </tr>
             </table>
         </div>

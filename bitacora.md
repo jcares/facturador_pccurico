@@ -1,39 +1,112 @@
-# BITACORA DEL PROYECTO: FACTURADOR-PCCURICO
+# Bitacora del Proyecto Facturador PCCurico
 
-## 1. ESTADO ACTUAL: MODULOS COMPLETADOS Y FUNCIONALES
+Este archivo debe actualizarse en cada cambio funcional, de seguridad, base de datos o despliegue. Sirve para retomar el proyecto sin perder contexto y mantener la linea tecnica del sistema.
 
-El nucleo del sistema operativo tipo "Invoice Ninja" se encuentra desplegado. Las siguientes caracteristicas estan integradas y operativas:
+## Objetivo del Sistema
 
-- **Arquitectura Base**: Patron MVC simplificado, conexion PDO Singleton y ruteo centralizado.
-- **Asistente de Instalacion (Wizard)**: Flujo de 6 pasos que valida el entorno del servidor, conecta la base de datos, ejecuta migraciones de esquema completas, registra los datos de la empresa, configura credenciales de Transbank y crea el usuario administrador.
-- **Modulo de Clientes**: Registro y listado de entidades.
-- **Modulo de Productos**: Gestion de inventario, registro de SKU, precios netos e integracion con el calculo del IVA.
-- **Modulo de Facturacion (Core B2B)**: Interfaz de creacion de documentos estructurada, permitiendo multiples lineas de detalle, seleccion de fechas de emision y vencimiento.
-- **Modulo de Pagos y Cuentas por Cobrar**: 
-    - Registro manual de abonos.
-    - Actualizacion inteligente del estado del documento (Pendiente -> Pagado).
-    - Panel de reportes financieros con desglose estricto de deudas vencidas y saldos pendientes.
-- **Portal de Cliente Publico**: Vista web aislada para la visualizacion del documento por parte del cliente final, protegida por tokens de acceso.
-- **Integracion Transbank Webpay Plus**: Conexion directa a la API REST (via cURL nativo) para inicializar pagos y procesar los retornos, inyectando el abono en el sistema de pagos automaticamente.
-- **Motor de Recordatorios Automatisado (CRON)**: Script de linea de comandos diseñado para buscar facturas por vencer o atrasadas, preparado para despachar correos con el enlace de pago seguro de Transbank.
-- **Motor de Impresion**: Plantillas generadas en HTML/CSS optimizadas tanto para formato A4 (corporativo) como para ticket de 80mm (impresora termica).
+Construir un facturador/POS inspirado en Invoice Ninja: clientes, productos, categorias, documentos, pagos, reportes, plantillas y enlaces publicos seguros de cobranza, con extras propios como monedas CLP/USD/UF, conversion a CLP, Webpay, plantillas visuales y herramientas de mantenimiento.
 
-## 2. AUDITORIA DE SEGURIDAD IMPLEMENTADA
+## Reglas de Trabajo
 
-La seguridad y la integridad de los datos han sido la prioridad en la construccion del sistema:
+- La raiz local de trabajo es `C:\Users\JCares\Documents\facturador-pccurico`.
+- Produccion se despliega copiando archivos al FTP montado en `Y:\`.
+- WAMP (`C:\wamp64\bin\php`) se usa solo para validacion local de sintaxis.
+- Antes de desplegar, respaldar archivos modificados de `Y:\` en `C:\tmp\facturador-prod-backup-*`.
+- Ejecutar `Herramientas > Sincronizar BD` despues de cambios de esquema.
+- No exponer archivos de diagnostico, configuracion, logs, backups ni instalacion sin login.
 
-- **Prevencion de Inyeccion SQL**: El 100% de las transacciones hacia la base de datos utilizan Consultas Preparadas (Prepared Statements) a traves de PDO.
-- **Proteccion de Acceso a Documentos (Anti-IDOR)**: Las facturas expuestas publicamente al cliente no utilizan su ID secuencial (ej: id=15), sino un token criptografico robusto generado mediante `bin2hex(random_bytes(16))`, mitigando la enumeracion de facturas.
-- **Criptografia de Credenciales**: Las contraseñas de los administradores utilizan el estandar de la industria `bcrypt` para su almacenamiento seguro.
-- **Proteccion del Instalador**: Una vez completado, el sistema genera el archivo `installed.lock` impidiendo de manera absoluta la sobreescritura de configuraciones o caidas de base de datos no autorizadas.
-- **Restriccion de Ejecucion Cron**: El motor automatizado de cobranzas restringe la ejecucion HTTP, requiriendo invocacion por interfaz de comandos (CLI) o un token privado, impidiendo abusos de CPU o SPAM.
+## Contrato Actual de Base de Datos
 
-## 3. PENDIENTES Y PROXIMOS PASOS ESTRATEGICOS
+- `users`: usuarios administradores.
+- `clients`: clientes con `business_name`, `contact_name`, `rut`, `email`, `phone`, `address`; `name` queda como compatibilidad legado.
+- `categories`: categorias de productos.
+- `products`: catalogo con `sku` unico, precio base, `currency`, categoria, IVA y stock.
+- `invoices`: documentos con cliente, numero unico, estado, totales, moneda de cobro, tipo de cambio, vencimiento y token publico.
+- `invoice_items`: lineas del documento, producto, cantidad, precio cobrado, precio/moneda original y tasa usada.
+- `payments`: pagos aplicados a facturas; el monto se interpreta en la moneda de la factura.
+- `settings`: configuracion de negocio, correo, Webpay y valores publicos.
+- `exchange_rates`: cache de tasas CLP para USD y UF.
+- `document_templates`: configuracion visual de documentos.
+- `credit_notes`: anulaciones/notas asociadas a facturas.
+- `recurring_invoices`: plantillas recurrentes con cliente, frecuencia, fechas, ciclos, totales y ultimo documento generado.
+- `recurring_invoice_items`: lineas copiadas de la venta para generar facturas recurrentes futuras.
 
-Para elevar el sistema al nivel de produccion final, se requiere abordar los siguientes puntos:
+## Cambios Recientes
 
-1. **Tokens CSRF**: Implementar la generacion y validacion estricta de tokens CSRF en todos los formularios POST del sistema para evitar falsificacion de peticiones entre sitios.
-2. **Generador PDF (DomPDF)**: Integrar una libreria de renderizado PDF real para reemplazar la simulacion actual, de modo que el motor de correos adjunte un documento fisico.
-3. **Motor SMTP Activo**: Reemplazar la funcion nativa de envio de correos por la integracion de PHPMailer o libreria afin, configurando credenciales SMTP para garantizar la entrega de recordatorios y evitar listas negras de spam.
-4. **Sanitizacion de Entrada Estricta**: Reforzar todos los controladores para aplicar `filter_var` y escapes HTML a las entradas de usuario antes de ser procesadas por el motor.
-5. **Edicion y Anulacion de Registros**: Extender las vistas y controladores actuales (que hoy permiten Creacion y Listado) para agregar flujos de edicion de clientes/productos y permitir la anulacion oficial de facturas (Notas de Credito genericas).
+### 2026-05-06
+
+- Se agrego SKU automatico para productos cuando el campo queda vacio.
+- Se refactorizo por completo `invoices.php?action=create`: una sola fuente de productos en JSON, primera linea renderizada por PHP, filas dinamicas por event delegation, sin `select` oculto duplicado ni handlers inline fragiles.
+- Se agregaron funciones globales de compatibilidad en POS (`updatePrice`, `calculateRow`, `refreshAllPrices`, `addRow`) para evitar errores si el navegador/OPcache conserva HTML antiguo con handlers inline.
+- Se alineo el menu movil con las entradas principales del desktop: Dashboard, Punto Venta, Ventas, Productos, Clientes y Herramientas.
+- Se agregaron mensajes explicitos para errores de ventas (`invalid_client`, `no_items`, `invalid_invoice`, `cancel_failed`) en los toast del layout.
+- Se endurecio `run_migrations.php` para consolidar categorias duplicadas, reasignar productos, crear indice unico en `categories.name` y sembrar categorias base sin depender de `INSERT IGNORE`.
+- El instalador tambien siembra categorias base con verificacion por nombre para mantener el mismo comportamiento idempotente.
+- Se ajusto el layout desktop para que el contenido de Punto de Venta no invada ni bloquee el menu lateral: sidebar sin shrink, con z-index y scroll propio; main-content con min-width 0 y overflow-x controlado.
+- Se forzo charset UTF-8 desde `.htaccess` para HTML/CSS/JS/JSON y se versiono `lucide.min.js` para romper cache del navegador.
+- Se dejo una primera linea de venta renderizada por PHP en `invoices.php?action=create` para que el formulario no dependa del JS inicial; el JS solo agrega/calcula lineas adicionales.
+- Se agrego vista de detalle para `invoices.php?id=*`, con todas las lineas/productos del documento, y el historial ahora enlaza al detalle.
+- Se normalizaron a ASCII los textos visibles de `invoices.php?action=create` y mensajes toast del layout para evitar caracteres erroneos por interpretacion de charset en produccion.
+- Se corrigio `+ Anadir Linea` en `invoices.php?action=create`.
+- Se corrigio la tabla de productos en ventas para que no quede oculta en moviles.
+- Se agrego opcion de crear una venta como factura recurrente, con frecuencia, primera recurrencia, dias de vencimiento y ciclos.
+- Se agregaron tablas y cron de facturas recurrentes inspirado en Invoice Ninja: la recurrencia queda como plantilla y el cron genera nuevas facturas desde sus lineas.
+- Se creo copia local de pruebas en `C:\wamp64\www\facturador-pccurico-codex`.
+- Se creo/uso BD local `pccurico_facturador` con usuario `pccurico_facturador` para pruebas en WAMP.
+- Se corrigio `.htaccess` para permitir ejecucion en subdirectorios locales sin romper produccion en raiz.
+- Se agregaron menus y pantallas base para Recurrentes, Cotizaciones, Notas de credito y Portal clientes.
+- Se desplegaron a `Y:\` los cambios de facturas recurrentes, menu organizado, pantallas base y correccion de ventas.
+- Se corrigieron labels sin asociacion en `invoices.php?action=create` y se agregaron etiquetas accesibles a lineas dinamicas.
+- Se reemplazo optional chaining del validador JS de ventas por JS compatible para evitar avisos de funcion no disponible en navegadores mas estrictos.
+- `products.php` muestra precio definido y equivalente CLP.
+- Facturas y pagos respetan moneda CLP/USD/UF.
+- Se agrego acceso a Categorias en menu y submenus cerrados por defecto.
+- Herramientas se integraron al layout (`tools.php?action=*`) y dejaron de mostrar paginas crudas.
+- Se endurecieron migraciones para no duplicar datos y crear columnas faltantes.
+- Se creo esta bitacora para continuidad del proyecto.
+- Se protegieron diagnosticos publicos (`info.php`, `db_test.php`, `session_test.php`) con login.
+- Se endurecio `.htaccess` para bloquear acceso directo a codigo, configuracion, storage, logs, backups y artefactos.
+- Se elimino el token CRON por defecto; por web solo funciona si `CRON_TOKEN` esta configurado.
+- Se normalizaron consultas de clientes a `COALESCE(business_name, name)`.
+- Se impidio eliminar clientes con documentos asociados.
+- Se agrego moneda/tipo de cambio a pagos en migraciones y registro.
+- Webpay cobra en CLP usando equivalente de facturas USD/UF y registra el pago en la moneda de la factura.
+- Se actualizo instalador para nuevas columnas de moneda/tipo de cambio.
+
+## Pendientes Recomendados
+
+- Implementar numeracion configurable tipo Invoice Ninja por serie/documento.
+- Agregar presupuestos/cotizaciones y conversion a factura.
+- Agregar impuestos por linea y descuentos.
+- Agregar roles/permisos de usuario.
+- Agregar auditoria de cambios por usuario.
+- Agregar pruebas automatizadas de rutas publicas y formularios criticos.
+
+## Roadmap para acercarse a Invoice Ninja
+
+### Prioridad Alta
+
+- Cotizaciones/presupuestos con estados `draft`, `sent`, `approved`, `converted`, PDF, envio por correo y conversion directa a factura.
+- Numeracion configurable para facturas, recurrentes, cotizaciones, pagos y notas de credito, con prefijos y contador por documento.
+- Notas de credito completas: lineas, PDF, estado, credito disponible y aplicacion como pago a facturas.
+- Portal de cliente mejorado: historial de facturas, pagos, cotizaciones, recurrentes, creditos y descarga de documentos desde enlace seguro.
+- Impuestos por linea, impuestos globales, descuentos por linea/globales e impuestos inclusivos/exclusivos.
+- Facturas recurrentes fase 2: pausar/reanudar, editar plantilla, historial de facturas generadas, actualizar precios desde catalogo y aumento porcentual.
+
+### Prioridad Media
+
+- Contactos multiples por cliente y seleccion de destinatarios por factura/cotizacion.
+- Emails transaccionales: enviar factura/cotizacion, reenviar, registrar historial de emails y programar envio.
+- Pagos avanzados: pagos parciales, pagos no aplicados, sobrepago como credito, metodos configurables y recibo PDF.
+- Adjuntos/documentos en clientes, productos, facturas, cotizaciones y creditos.
+- Panel lateral/detalle de documento con resumen, historial, actividad y pagos asociados.
+- Reportes exportables CSV/PDF para ventas, productos, pagos, clientes, recurrentes, impuestos y cuentas por cobrar.
+
+### Prioridad Baja
+
+- Proyectos, tareas y control de tiempo para facturar servicios por horas.
+- Gastos/proveedores y gastos facturables a clientes.
+- Grupos de clientes con configuraciones propias de moneda, impuestos, plantillas y emails.
+- Campos personalizados para clientes, productos y documentos.
+- Webhooks/eventos internos para cambios de estado, pagos, aprobaciones y vencimientos.
+- API interna autenticada para futuras integraciones.
