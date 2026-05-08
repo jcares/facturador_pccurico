@@ -11,6 +11,20 @@ ini_set('display_errors', 1);
 
 define('ROOT_PATH', dirname(__DIR__));
 
+// Crear directorio storage si no existe (instalación limpia)
+if (!is_dir(ROOT_PATH . '/storage')) {
+    @mkdir(ROOT_PATH . '/storage', 0755, true);
+}
+if (!is_dir(ROOT_PATH . '/storage/logs')) {
+    @mkdir(ROOT_PATH . '/storage/logs', 0755, true);
+}
+if (!is_dir(ROOT_PATH . '/storage/cache')) {
+    @mkdir(ROOT_PATH . '/storage/cache', 0755, true);
+}
+if (!is_dir(ROOT_PATH . '/storage/backups')) {
+    @mkdir(ROOT_PATH . '/storage/backups', 0755, true);
+}
+
 $step = isset($_GET['step']) ? (int)$_GET['step'] : 1;
 $error = null;
 $success = null;
@@ -81,14 +95,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     `price` DECIMAL(15,2) NOT NULL,
                     `currency` VARCHAR(10) DEFAULT 'CLP',
                     `category_id` INT NULL,
+                    `price_unit` VARCHAR(20) DEFAULT 'unit',
                     `tax_rate` DECIMAL(5,2) DEFAULT 0.19,
-                    `stock` INT DEFAULT 0,
+                    `stock` DECIMAL(12,2) DEFAULT 0,
                     `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP
                 ) ENGINE=InnoDB;
 
                 CREATE TABLE IF NOT EXISTS `categories` (
                     `id` INT AUTO_INCREMENT PRIMARY KEY,
                     `name` VARCHAR(255) NOT NULL UNIQUE,
+                    `parent_id` INT NULL,
                     `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP
                 ) ENGINE=InnoDB;
 
@@ -112,7 +128,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     `id` INT AUTO_INCREMENT PRIMARY KEY,
                     `invoice_id` INT,
                     `product_id` INT,
-                    `qty` INT NOT NULL,
+                    `qty` DECIMAL(12,2) NOT NULL,
                     `price` DECIMAL(15,2) NOT NULL,
                     `original_price` DECIMAL(15,2) NULL,
                     `original_currency` VARCHAR(10) NULL,
@@ -163,9 +179,121 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             ";
 
             $pdo->exec($sql);
-            $seedCategory = $pdo->prepare("INSERT INTO categories (name) SELECT ? WHERE NOT EXISTS (SELECT 1 FROM categories WHERE name = ?)");
+
+            // Create additional tables missing from original migration
+            $extraTables = [
+                "CREATE TABLE IF NOT EXISTS `document_templates` (
+                    `id` INT AUTO_INCREMENT PRIMARY KEY,
+                    `name` VARCHAR(255) NOT NULL,
+                    `type` ENUM('invoice', 'ticket', 'quote') NOT NULL DEFAULT 'invoice',
+                    `is_default` BOOLEAN DEFAULT FALSE,
+                    `config_json` TEXT,
+                    `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    `updated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+                ) ENGINE=InnoDB",
+                "CREATE TABLE IF NOT EXISTS `recurring_invoices` (
+                    `id` INT AUTO_INCREMENT PRIMARY KEY,
+                    `source_invoice_id` INT NULL,
+                    `last_invoice_id` INT NULL,
+                    `client_id` INT NOT NULL,
+                    `frequency` ENUM('weekly', 'monthly', 'quarterly', 'yearly') NOT NULL DEFAULT 'monthly',
+                    `status` ENUM('active', 'paused', 'completed') NOT NULL DEFAULT 'active',
+                    `start_date` DATE NOT NULL,
+                    `next_run_date` DATE NULL,
+                    `last_run_date` DATE NULL,
+                    `due_days` INT NOT NULL DEFAULT 30,
+                    `remaining_cycles` INT NULL,
+                    `cycles_generated` INT NOT NULL DEFAULT 0,
+                    `subtotal` DECIMAL(15,2) NOT NULL,
+                    `tax` DECIMAL(15,2) NOT NULL,
+                    `total` DECIMAL(15,2) NOT NULL,
+                    `currency` VARCHAR(10) DEFAULT 'CLP',
+                    `exchange_rate` DECIMAL(15,4) DEFAULT 1,
+                    `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                ) ENGINE=InnoDB",
+                "CREATE TABLE IF NOT EXISTS `recurring_invoice_items` (
+                    `id` INT AUTO_INCREMENT PRIMARY KEY,
+                    `recurring_invoice_id` INT NOT NULL,
+                    `product_id` INT NOT NULL,
+                    `qty` DECIMAL(12,2) NOT NULL,
+                    `price` DECIMAL(15,2) NOT NULL,
+                    `original_price` DECIMAL(15,2) NULL,
+                    `original_currency` VARCHAR(10) NULL,
+                    `exchange_rate` DECIMAL(15,4) DEFAULT 1,
+                    `total` DECIMAL(15,2) NOT NULL
+                ) ENGINE=InnoDB",
+                "CREATE TABLE IF NOT EXISTS `tasks` (
+                    `id` INT AUTO_INCREMENT PRIMARY KEY,
+                    `title` VARCHAR(255) NOT NULL,
+                    `description` TEXT,
+                    `status` ENUM('pending', 'in_progress', 'completed', 'cancelled') NOT NULL DEFAULT 'pending',
+                    `priority` ENUM('low', 'medium', 'high') NOT NULL DEFAULT 'medium',
+                    `due_date` DATE NULL,
+                    `assigned_to` INT NULL,
+                    `created_by` INT NOT NULL,
+                    `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    `updated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+                ) ENGINE=InnoDB",
+                "CREATE TABLE IF NOT EXISTS `purchase_orders` (
+                    `id` INT AUTO_INCREMENT PRIMARY KEY,
+                    `supplier_name` VARCHAR(255) NOT NULL,
+                    `supplier_rut` VARCHAR(20),
+                    `supplier_email` VARCHAR(255),
+                    `supplier_phone` VARCHAR(50),
+                    `supplier_address` TEXT,
+                    `number` VARCHAR(50) UNIQUE NOT NULL,
+                    `status` ENUM('draft', 'sent', 'received', 'canceled') DEFAULT 'draft',
+                    `subtotal` DECIMAL(15,2) NOT NULL,
+                    `tax` DECIMAL(15,2) NOT NULL,
+                    `total` DECIMAL(15,2) NOT NULL,
+                    `currency` VARCHAR(10) DEFAULT 'CLP',
+                    `exchange_rate` DECIMAL(15,4) DEFAULT 1,
+                    `due_date` DATE DEFAULT NULL,
+                    `notes` TEXT,
+                    `created_by` INT NOT NULL,
+                    `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    `updated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+                ) ENGINE=InnoDB",
+                "CREATE TABLE IF NOT EXISTS `purchase_order_items` (
+                    `id` INT AUTO_INCREMENT PRIMARY KEY,
+                    `purchase_order_id` INT NOT NULL,
+                    `product_name` VARCHAR(255) NOT NULL,
+                    `description` TEXT,
+                    `qty` DECIMAL(12,2) NOT NULL,
+                    `price` DECIMAL(15,2) NOT NULL,
+                    `tax_rate` DECIMAL(5,2) DEFAULT 0.19,
+                    `total` DECIMAL(15,2) NOT NULL
+                ) ENGINE=InnoDB",
+                "CREATE TABLE IF NOT EXISTS `expenses` (
+                    `id` INT AUTO_INCREMENT PRIMARY KEY,
+                    `title` VARCHAR(255) NOT NULL,
+                    `description` TEXT,
+                    `category` VARCHAR(100),
+                    `amount` DECIMAL(15,2) NOT NULL,
+                    `currency` VARCHAR(10) DEFAULT 'CLP',
+                    `exchange_rate` DECIMAL(15,4) DEFAULT 1,
+                    `date` DATE NOT NULL,
+                    `receipt_file` VARCHAR(255),
+                    `supplier` VARCHAR(255),
+                    `payment_method` VARCHAR(50),
+                    `tax_deductible` BOOLEAN DEFAULT FALSE,
+                    `created_by` INT NOT NULL,
+                    `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    `updated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+                ) ENGINE=InnoDB"
+            ];
+            foreach ($extraTables as $tblSql) {
+                $pdo->exec($tblSql);
+            }
+            $seedParent = $pdo->prepare("INSERT INTO categories (name, parent_id) SELECT ?, NULL WHERE NOT EXISTS (SELECT 1 FROM categories WHERE name = ?)");
+            $seedCategory = $pdo->prepare("INSERT INTO categories (name, parent_id) SELECT ?, ? WHERE NOT EXISTS (SELECT 1 FROM categories WHERE name = ?)");
+            $findCategory = $pdo->prepare("SELECT id FROM categories WHERE name = ? LIMIT 1");
             foreach (['Servicios', 'Hardware', 'Software'] as $categoryName) {
-                $seedCategory->execute([$categoryName, $categoryName]);
+                $seedParent->execute([$categoryName, $categoryName]);
+                $findCategory->execute([$categoryName]);
+                $parentId = (int)$findCategory->fetchColumn();
+                $childName = $categoryName . ' General';
+                $seedCategory->execute([$childName, $parentId, $childName]);
             }
             header('Location: install.php?step=4');
             exit;
@@ -178,6 +306,30 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if ($step === 4 && isset($_POST['biz_name'])) {
         // Guardar configuración de negocio en sesión
         $_SESSION['business_config'] = $_POST;
+
+        // Handle logo upload if present
+        if (isset($_FILES['biz_logo']) && $_FILES['biz_logo']['error'] === UPLOAD_ERR_OK) {
+            $allowedMimes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
+            $finfo = finfo_open(FILEINFO_MIME_TYPE);
+            $mime = finfo_file($finfo, $_FILES['biz_logo']['tmp_name']);
+            finfo_close($finfo);
+            if (in_array($mime, $allowedMimes, true) && $_FILES['biz_logo']['size'] <= 5 * 1024 * 1024) {
+                $ext = strtolower(pathinfo($_FILES['biz_logo']['name'], PATHINFO_EXTENSION));
+                $uploadDir = ROOT_PATH . '/public/uploads/';
+                if (!is_dir($uploadDir)) {
+                    mkdir($uploadDir, 0755, true);
+                }
+                $logoName = 'logo_' . bin2hex(random_bytes(8)) . '.' . $ext;
+                if (move_uploaded_file($_FILES['biz_logo']['tmp_name'], $uploadDir . $logoName)) {
+                    $_SESSION['business_config']['biz_logo'] = $logoName;
+                }
+            }
+        }
+        // Clean raw file array from session if upload failed
+        if (isset($_SESSION['business_config']['biz_logo']) && is_array($_SESSION['business_config']['biz_logo'])) {
+            unset($_SESSION['business_config']['biz_logo']);
+        }
+
         header('Location: install.php?step=5');
         exit;
     }
@@ -296,12 +448,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             <?php if ($step === 4): ?>
                 <div>
                     <h2>Paso 4: Datos del Negocio & Webpay</h2>
-                    <form action="install.php?step=4" method="POST">
+                    <form action="install.php?step=4" method="POST" enctype="multipart/form-data">
                         <h3 style="font-size: 1rem; color: var(--text-muted); margin-bottom: 15px; margin-top: 10px;">Perfil de la Empresa</h3>
                         <div class="form-group"><label>Nombre Empresa</label><input type="text" name="biz_name" required></div>
                         <div class="form-group"><label>RUT Empresa</label><input type="text" name="biz_rut" placeholder="76.123.456-7"></div>
                         <div class="form-group"><label>Dirección</label><input type="text" name="biz_address"></div>
                         <div class="form-group"><label>Giro</label><input type="text" name="biz_giro"></div>
+                        <div class="form-group"><label>Logo de la Empresa (opcional)</label><input type="file" name="biz_logo" accept="image/jpeg,image/png,image/gif,image/webp"><small style="color: var(--text-muted); display:block; margin-top:5px;">Formato: PNG o JPG, máximo 5MB</small></div>
                         
                         <h3 style="font-size: 1rem; color: var(--text-muted); margin-bottom: 15px; margin-top: 30px;">Pasarela de Pago (Transbank Webpay Plus REST)</h3>
                         <div class="form-group">

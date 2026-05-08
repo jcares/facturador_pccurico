@@ -6,12 +6,15 @@
     RewriteRule ^(app|bootstrap|config|Core|Modules|routes|storage|templates)(/|$) - [F,L,NC]
     RewriteRule (^|/)(error\.log|installed\.lock|.*\.(sql|sqlite|bak|backup|zip|tar|gz|env|ini|log))$ - [F,L,NC]
 
-    # Si el archivo o carpeta existe en /public/, servirlo directamente
+    # URL raíz → enviar a public/index.php directamente
+    RewriteRule ^$ public/index.php [L]
+
+    # Si el archivo o carpeta existe, servirlo directamente
     RewriteCond %{REQUEST_FILENAME} -f [OR]
     RewriteCond %{REQUEST_FILENAME} -d
     RewriteRule ^ - [L]
 
-    # Redirigir todo lo demas a public/index.php o public/install.php
+    # Redirigir todo lo demas a public/
     RewriteRule ^(.*)$ public/$1 [L,QSA]
 </IfModule>
 

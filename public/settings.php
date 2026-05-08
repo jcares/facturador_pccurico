@@ -1,5 +1,4 @@
 <?php
-session_start();
 require_once __DIR__ . '/../bootstrap/app.php';
 
 use Core\Auth;
@@ -11,7 +10,6 @@ if (!Auth::check()) {
 }
 
 \Core\Security::validatePost();
-$_POST = \Core\Security::sanitizeInput($_POST);
 
 $controller = new SettingsController();
 $action = $_GET['action'] ?? 'index';

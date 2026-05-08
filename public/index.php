@@ -4,11 +4,15 @@
  * Entry Point
  */
 
-session_start();
-
 define('APP_START', microtime(true));
 define('ROOT_PATH', dirname(__DIR__));
 define('PUBLIC_PATH', __DIR__);
+
+// Verificar si el sistema está instalado
+if (!file_exists(ROOT_PATH . '/storage/installed.lock')) {
+    header('Location: install.php');
+    exit;
+}
 
 // Bootstrap
 require_once ROOT_PATH . '/bootstrap/app.php';

@@ -3,14 +3,14 @@ namespace Modules\Products;
 
 use Core\Controller;
 use Core\Security;
+use Modules\Categories\Category;
 
 class ProductController extends Controller
 {
     public function index()
     {
         $products = Product::all();
-        $db = \Core\Database::getInstance();
-        $categories = $db->query("SELECT * FROM categories ORDER BY name ASC")->fetchAll();
+        $categories = Category::all();
         $rates = ['CLP' => 1.0, 'USD' => 1.0, 'UF' => 1.0];
         try {
             $rates = array_merge($rates, \Core\CurrencyService::getRates());
@@ -40,8 +40,12 @@ class ProductController extends Controller
                 $currency = 'CLP';
             }
             $categoryId = !empty($_POST['category_id']) ? Security::cleanInt($_POST['category_id']) : null;
+            $priceUnit = Security::cleanString($_POST['price_unit'] ?? 'unit', 20);
+            if (!in_array($priceUnit, ['unit', 'meter'], true)) {
+                $priceUnit = 'unit';
+            }
             $taxRate = Security::cleanDecimal($_POST['tax_rate'] ?? 0.19, 0.19);
-            $stock = Security::cleanInt($_POST['stock'] ?? 0);
+            $stock = Security::cleanDecimal($_POST['stock'] ?? 0);
 
             if (empty($name) || $price <= 0) {
                 $this->redirect('products.php?error=invalid_data');
@@ -54,6 +58,7 @@ class ProductController extends Controller
                     'price' => $price,
                     'currency' => $currency,
                     'category_id' => $categoryId,
+                    'price_unit' => $priceUnit,
                     'tax_rate' => $taxRate,
                     'stock' => $stock
                 ]);
@@ -78,8 +83,12 @@ class ProductController extends Controller
                 $currency = 'CLP';
             }
             $categoryId = !empty($_POST['category_id']) ? Security::cleanInt($_POST['category_id']) : null;
+            $priceUnit = Security::cleanString($_POST['price_unit'] ?? 'unit', 20);
+            if (!in_array($priceUnit, ['unit', 'meter'], true)) {
+                $priceUnit = 'unit';
+            }
             $taxRate = Security::cleanDecimal($_POST['tax_rate'] ?? 0.19, 0.19);
-            $stock = Security::cleanInt($_POST['stock'] ?? 0);
+            $stock = Security::cleanDecimal($_POST['stock'] ?? 0);
 
             if ($id <= 0 || empty($name) || $price <= 0) {
                 $this->redirect('products.php?error=invalid_data');
@@ -92,6 +101,7 @@ class ProductController extends Controller
                     'price' => $price,
                     'currency' => $currency,
                     'category_id' => $categoryId,
+                    'price_unit' => $priceUnit,
                     'tax_rate' => $taxRate,
                     'stock' => $stock
                 ]);

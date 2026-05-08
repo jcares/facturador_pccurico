@@ -33,9 +33,37 @@ Construir un facturador/POS inspirado en Invoice Ninja: clientes, productos, cat
 
 ## Cambios Recientes
 
+### 2026-05-08
+
+- Se corrigio el fallo critico donde el wizard de instalacion nunca se iniciaba en una instalacion nueva: `index.php` iba directo al dashboard, `login.php` cargaba bootstrap con credenciales invalidas y provocaba un error fatal.
+- Se agrego guard de instalacion centralizado en `bootstrap/app.php`: si `storage/installed.lock` no existe y el script actual no es `install.php`, redirige automaticamente al wizard. Esto protege los 26+ entry points publicos sin parchear cada uno.
+- Se agregaron guards adicionales en `index.php` y `login.php` como defensa en profundidad (se ejecutan antes del bootstrap).
+- Se eliminaron credenciales hardcodeadas de `config/database.php`; los defaults ahora son strings vacios para evitar errores de conexion fatales en servidores nuevos sin `.env`.
+- Se agrego creacion automatica de `storage/`, `storage/logs/`, `storage/cache/` y `storage/backups/` en `install.php` para instalaciones limpias donde la carpeta no existe.
+- Se refactorizó completamente `style.css`: eliminadas reglas duplicadas (`.nav-parent`, `.nav-submenu`, `.nav-sub-link`, `.nav-link`, `.card-lg` definidos 2 veces con estrategias opuestas), organizado en secciones lógicas, reducido abuso de `!important`, unificado submenu a estrategia `display:flex` toggle.
+- Se corrigió tag `</script>` faltante en `layout.php` que causaba errores de parsing JS.
+- Se añadieron gráficos interactivos al Dashboard utilizando Chart.js (respetando la política Zero-CDN, incluyendo la librería de forma local). Se implementó un gráfico de líneas para las ventas de los últimos 6 meses y un gráfico tipo "doughnut" para el estado de las facturas.
+- Se restauró el enlace al mantenedor de Categorías en el menú lateral principal, debajo de Productos.
+- Se refactorizó el módulo de configuración de correos electrónicos (`email_settings.php` y su vista), añadiendo la funcionalidad de "Enviar Correo de Prueba" para validar la configuración SMTP.
+
 ### 2026-05-06
 
+- Se implementó completamente el módulo de Tareas: tabla `tasks` en base de datos, modelo Task.php, controlador TaskController.php, vistas index/create/edit, archivo público tasks.php y enlace activo en el menú lateral.
+- Se implementó completamente el módulo de Órdenes de Compra: tablas `purchase_orders` y `purchase_order_items` en base de datos, modelo PurchaseOrder.php, controlador PurchaseOrderController.php, vistas index/create/edit/show, archivo público purchase_orders.php y enlace activo en el menú lateral. Incluye gestión de proveedores, artículos dinámicos con cálculo automático de totales e IVA.
+- Se implementó completamente el módulo de Gastos: tabla `expenses` en base de datos, modelo Expense.php, controlador ExpenseController.php, vistas index/create/edit, archivo público expenses.php y enlace activo en el menú lateral. Incluye categorías, métodos de pago, deducibilidad fiscal, subida de comprobantes y estadísticas mensuales.
+- Se actualizó el menú lateral para marcar activos los enlaces de Tareas, Órdenes de Compra y Gastos cuando se accede a sus respectivas páginas.
+- Se agregó validación de seguridad y sanitización de datos en todos los nuevos controladores.
+- Se integraron todos los módulos con el sistema de autenticación y layout existente.
+- Se actualizó run_migrations.php con las nuevas tablas para tasks, purchase_orders, purchase_order_items y expenses.
+- Se corrigió el menú de configuración: eliminó scripts JavaScript duplicados que causaban conflictos, agregó estilos CSS faltantes para submenús (.nav-submenu, .nav-sub-link, .nav-parent), y unificó la lógica de apertura/cierre de submenús con cierre automático de otros menús abiertos.
+
 - Se agrego SKU automatico para productos cuando el campo queda vacio.
+- Se ajusto el modulo de categorias para manejar categorias padre e hijas; los productos se asignan a categorias hijas.
+- Se simplifico el formulario de categorias: si `Categoria padre` queda vacia es categoria superior; si se selecciona una, queda como hija.
+- Se agrego tipo de precio en productos: por unidad o por metro, con cantidades/stock decimales para ventas por metro.
+- Se reorganizo Configuracion en secciones tipo menu: basica y avanzada, reutilizando paginas existentes para plantillas, portal, herramientas y registros.
+- Se agrego editor de asunto/cuerpo para correos de recordatorio, con PDF adjunto opcional y boton Webpay opcional.
+- Se agrego bloque opcional de pago Webpay en el editor visual de plantillas y marca Transbank/Webpay en botones de pago.
 - Se refactorizo por completo `invoices.php?action=create`: una sola fuente de productos en JSON, primera linea renderizada por PHP, filas dinamicas por event delegation, sin `select` oculto duplicado ni handlers inline fragiles.
 - Se agregaron funciones globales de compatibilidad en POS (`updatePrice`, `calculateRow`, `refreshAllPrices`, `addRow`) para evitar errores si el navegador/OPcache conserva HTML antiguo con handlers inline.
 - Se alineo el menu movil con las entradas principales del desktop: Dashboard, Punto Venta, Ventas, Productos, Clientes y Herramientas.
@@ -72,6 +100,12 @@ Construir un facturador/POS inspirado en Invoice Ninja: clientes, productos, cat
 - Se agrego moneda/tipo de cambio a pagos en migraciones y registro.
 - Webpay cobra en CLP usando equivalente de facturas USD/UF y registra el pago en la moneda de la factura.
 - Se actualizo instalador para nuevas columnas de moneda/tipo de cambio.
+- Se reorganizo el menu principal a una lista plana en el orden: Inicio, Clientes, Productos, Facturas (con submenus: Crear Factura, Ver Facturas, Notas de Credito), Facturas Recurrentes, Pagos, Cotizaciones, Tareas, Ordenes de compra, Gastos, Informes, Configuracion (con submenus para todas las secciones de ajustes).
+- Se corrigieron textos a español chileno: titulo por defecto a "Resumen General", "Ordenes de compra" a "Órdenes de compra", "Cerrar Sesion" a "Cerrar Sesión".
+- Se desplegaron a `Y:\` los cambios del menu reorganizado y correcciones de español chileno.
+- Se mejoraron los textos de ayuda en formularios de configuración, agregando explicaciones detalladas y placeholders para guiar al usuario, elevando el nivel profesional del sistema.
+- Se unificó el menú móvil con el desktop: ahora en móvil se muestra el mismo sidebar lateral con toggle hamburguesa, eliminando la barra inferior limitada y asegurando contenido igual en ambas versiones; se agregó overlay para mejor UX.
+- Se restauró la barra de navegación inferior en móvil para optimizar el uso del ancho completo del teléfono y no perder espacio, actualizando los enlaces para mayor coherencia con el menú desktop.
 
 ## Pendientes Recomendados
 

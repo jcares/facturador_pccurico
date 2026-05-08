@@ -20,6 +20,12 @@ $money = function ($amount) use ($currency, $decimals) {
             <a href="invoices.php?action=print&id=<?= (int)$invoice['id'] ?>&format=a4" target="_blank" class="btn-primary link-button">
                 <i data-lucide="printer"></i> Imprimir A4
             </a>
+            <a href="invoices.php?action=download&id=<?= (int)$invoice['id'] ?>" class="btn-secondary link-button">
+                <i data-lucide="download"></i> Descargar
+            </a>
+            <a href="invoices.php?action=send&id=<?= (int)$invoice['id'] ?>" class="btn-primary link-button" style="background: var(--success, #10b981);">
+                <i data-lucide="mail"></i> Enviar por Email
+            </a>
             <a href="payments.php?invoice_id=<?= (int)$invoice['id'] ?>" class="btn-primary link-button">
                 <i data-lucide="dollar-sign"></i> Registrar Pago
             </a>
@@ -63,7 +69,7 @@ $money = function ($amount) use ($currency, $decimals) {
                         <tr>
                             <td class="highlight"><?= htmlspecialchars($item['product_name'] ?? 'Producto eliminado') ?></td>
                             <td style="color: var(--text-muted);"><?= htmlspecialchars($item['product_sku'] ?? '-') ?></td>
-                            <td style="text-align: right;"><?= (int)$item['qty'] ?></td>
+                            <td style="text-align: right;"><?= number_format((float)$item['qty'], floor((float)$item['qty']) == (float)$item['qty'] ? 0 : 2, ',', '.') ?></td>
                             <td style="text-align: right;"><?= $money($item['price']) ?></td>
                             <td style="text-align: right; font-weight: 700;"><?= $money($item['total']) ?></td>
                         </tr>

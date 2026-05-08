@@ -41,6 +41,12 @@ switch ($action) {
     case 'cancel':
         $controller->cancel();
         break;
+    case 'send':
+        $controller->send();
+        break;
+    case 'download':
+        $controller->download();
+        break;
     default:
         $controller->index();
         break;

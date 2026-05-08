@@ -11,7 +11,7 @@ $user = \Core\Auth::user();
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title><?= htmlspecialchars($title ?? 'Dashboard') ?> | FACTURADOR-PCCURICO</title>
+    <title><?= htmlspecialchars($title ?? 'Resumen General') ?> | FACTURADOR-PCCURICO</title>
     <link rel="icon" type="image/png" href="assets/img/favicon.png">
     <link rel="stylesheet" href="assets/css/style.css?v=<?= time() ?>">
     <script src="assets/js/lucide.min.js?v=20260506-charset"></script>
@@ -25,67 +25,71 @@ $user = \Core\Auth::user();
             </div>
 
             <nav class="nav-menu">
-                <div class="nav-section">
-                    <div class="nav-section-title">Operacion</div>
-                    <a href="index.php" class="nav-link <?= $isActive(['index.php']) ?>">
-                        <i data-lucide="layout-dashboard"></i> Dashboard
-                    </a>
-                    <a href="invoices.php?action=create" class="nav-link <?= $current === 'invoices.php' && ($_GET['action'] ?? '') === 'create' ? 'active' : '' ?>">
-                        <i data-lucide="shopping-cart"></i> Punto de Venta
-                    </a>
-                    <button class="nav-parent" type="button" data-submenu="sales-menu">
-                        <span><i data-lucide="receipt-text"></i> Ventas</span>
-                        <i data-lucide="chevron-down"></i>
-                    </button>
-                    <div class="nav-submenu" id="sales-menu">
-                        <a href="invoices.php" class="nav-sub-link <?= $current === 'invoices.php' && ($_GET['action'] ?? '') !== 'create' ? 'active' : '' ?>">Facturas y boletas</a>
-                        <a href="recurring_invoices.php" class="nav-sub-link <?= $isActive(['recurring_invoices.php']) ?>">Recurrentes</a>
-                        <a href="quotes.php" class="nav-sub-link <?= $isActive(['quotes.php']) ?>">Cotizaciones</a>
-                        <a href="credit_notes.php" class="nav-sub-link <?= $isActive(['credit_notes.php']) ?>">Notas de credito</a>
-                        <a href="payments.php" class="nav-sub-link <?= $isActive(['payments.php']) ?>">Pagos</a>
-                    </div>
+                <a href="index.php" class="nav-link <?= $isActive(['index.php']) ?>">
+                    <i data-lucide="home"></i> Inicio
+                </a>
+                <a href="clients.php" class="nav-link <?= $isActive(['clients.php']) ?>">
+                    <i data-lucide="users"></i> Clientes
+                </a>
+                <a href="products.php" class="nav-link <?= $isActive(['products.php']) ?>">
+                    <i data-lucide="package"></i> Productos
+                </a>
+                <a href="categories.php" class="nav-link <?= $isActive(['categories.php']) ?>">
+                    <i data-lucide="tags"></i> Categorías
+                </a>
+                <button class="nav-parent" type="button" data-submenu="invoices-menu">
+                    <span><i data-lucide="file-text"></i> Facturas</span>
+                    <i data-lucide="chevron-down"></i>
+                </button>
+                <div class="nav-submenu" id="invoices-menu">
+                    <a href="invoices.php?action=create" class="nav-sub-link <?= $current === 'invoices.php' && ($_GET['action'] ?? '') === 'create' ? 'active' : '' ?>">Crear Factura</a>
+                    <a href="invoices.php" class="nav-sub-link <?= $current === 'invoices.php' && ($_GET['action'] ?? '') !== 'create' ? 'active' : '' ?>">Ver Facturas</a>
+                    <a href="credit_notes.php" class="nav-sub-link <?= $isActive(['credit_notes.php']) ?>">Notas de Crédito</a>
                 </div>
-
-                <div class="nav-section">
-                    <button class="nav-parent" type="button" data-submenu="catalog-menu">
-                        <span><i data-lucide="archive"></i> Catalogo</span>
-                        <i data-lucide="chevron-down"></i>
-                    </button>
-                    <div class="nav-submenu" id="catalog-menu">
-                        <a href="products.php" class="nav-sub-link <?= $isActive(['products.php']) ?>">Productos e inventario</a>
-                        <a href="categories.php" class="nav-sub-link <?= $isActive(['categories.php']) ?>">Categorias</a>
-                        <a href="clients.php" class="nav-sub-link <?= $isActive(['clients.php']) ?>">Clientes</a>
-                    </div>
-                </div>
-
-                <div class="nav-section">
-                    <button class="nav-parent" type="button" data-submenu="admin-menu">
-                        <span><i data-lucide="sliders-horizontal"></i> Administracion</span>
-                        <i data-lucide="chevron-down"></i>
-                    </button>
-                    <div class="nav-submenu" id="admin-menu">
-                        <a href="reports.php" class="nav-sub-link <?= $isActive(['reports.php']) ?>">Reportes</a>
-                        <a href="templates.php" class="nav-sub-link <?= $isActive(['templates.php']) ?>">Plantillas</a>
-                        <a href="client_portal.php" class="nav-sub-link <?= $isActive(['client_portal.php']) ?>">Portal clientes</a>
-                        <a href="settings.php" class="nav-sub-link <?= $isActive(['settings.php']) ?>">Configuracion</a>
-                    </div>
-                </div>
-
-                <div class="nav-section">
-                    <button class="nav-parent" type="button" data-submenu="tools-menu">
-                        <span><i data-lucide="wrench"></i> Herramientas</span>
-                        <i data-lucide="chevron-down"></i>
-                    </button>
-                    <div class="nav-submenu" id="tools-menu">
-                        <a href="tools.php" class="nav-sub-link <?= $isActive(['tools.php']) ?>">Panel de herramientas</a>
-                        <a href="tools.php?action=sync" class="nav-sub-link">Sincronizar BD</a>
-                        <a href="tools.php?action=log" class="nav-sub-link">Logs</a>
-                    </div>
+                <a href="recurring_invoices.php" class="nav-link <?= $isActive(['recurring_invoices.php']) ?>">
+                    <i data-lucide="repeat"></i> Facturas Recurrentes
+                </a>
+                <a href="payments.php" class="nav-link <?= $isActive(['payments.php']) ?>">
+                    <i data-lucide="credit-card"></i> Pagos
+                </a>
+                <a href="quotes.php" class="nav-link <?= $isActive(['quotes.php']) ?>">
+                    <i data-lucide="clipboard-list"></i> Cotizaciones
+                </a>
+                <a href="tasks.php" class="nav-link <?= $isActive(['tasks.php']) ?>">
+                    <i data-lucide="check-square"></i> Tareas
+                </a>
+                <a href="purchase_orders.php" class="nav-link <?= $isActive(['purchase_orders.php']) ?>">
+                    <i data-lucide="shopping-bag"></i> Órdenes de compra
+                </a>
+                <a href="expenses.php" class="nav-link <?= $isActive(['expenses.php']) ?>">
+                    <i data-lucide="dollar-sign"></i> Gastos
+                </a>
+                <a href="reports.php" class="nav-link <?= $isActive(['reports.php']) ?>">
+                    <i data-lucide="bar-chart"></i> Informes
+                </a>
+                <button class="nav-parent" type="button" data-submenu="settings-menu">
+                    <span><i data-lucide="settings"></i> Configuración</span>
+                    <i data-lucide="chevron-down"></i>
+                </button>
+                <div class="nav-submenu" id="settings-menu">
+                    <a href="company.php" class="nav-sub-link <?= $current === 'company.php' ? 'active' : '' ?>">Detalles de la Empresa</a>
+                    <a href="settings.php?section=user" class="nav-sub-link <?= $current === 'settings.php' && ($_GET['section'] ?? '') === 'user' ? 'active' : '' ?>">Detalles de Usuario</a>
+                    <a href="localization.php" class="nav-sub-link <?= $current === 'localization.php' ? 'active' : '' ?>">Localización</a>
+                    <a href="settings.php?section=payments" class="nav-sub-link <?= $current === 'settings.php' && ($_GET['section'] ?? '') === 'payments' ? 'active' : '' ?>">Configuración de Pagos</a>
+                    <a href="taxes.php" class="nav-sub-link <?= $current === 'taxes.php' ? 'active' : '' ?>">Impuestos</a>
+                    <a href="product_settings.php" class="nav-sub-link <?= $current === 'product_settings.php' ? 'active' : '' ?>">Producto</a>
+                    <a href="email_settings.php" class="nav-sub-link <?= $current === 'email_settings.php' ? 'active' : '' ?>">Correo Electrónico</a>
+                    <a href="email_templates.php" class="nav-sub-link <?= $current === 'email_templates.php' ? 'active' : '' ?>">Plantillas & Recordatorios</a>
+                    <a href="templates.php" class="nav-sub-link <?= $isActive(['templates.php']) ?>">Diseño de Factura</a>
+                    <a href="client_portal.php" class="nav-sub-link <?= $isActive(['client_portal.php']) ?>">Portal de Cliente</a>
+                    <a href="tools.php" class="nav-sub-link <?= $isActive(['tools.php']) ?>">Copia / Importar / Exportar</a>
+                    <a href="tools.php?action=sync" class="nav-sub-link">Sincronizar BD</a>
+                    <a href="tools.php?action=log" class="nav-sub-link">Registros del Sistema</a>
                 </div>
 
                 <div class="nav-section nav-bottom">
                     <a href="logout.php" class="nav-link logout-link">
-                        <i data-lucide="log-out"></i> Cerrar Sesion
+                        <i data-lucide="log-out"></i> Cerrar Sesión
                     </a>
                 </div>
             </nav>
@@ -126,37 +130,6 @@ $user = \Core\Auth::user();
     </div>
 
     <script>
-        // Menu Management - Submenus closed by default (per BITACORA.md)
-        document.querySelectorAll('[data-submenu]').forEach((button) => {
-            button.addEventListener('click', (e) => {
-                e.preventDefault();
-                const menuId = button.dataset.submenu;
-                const menu = document.getElementById(menuId);
-                
-                if (!menu) return;
-                
-                const isCurrentlyOpen = menu.classList.contains('open');
-                
-                // Close all other submenus when opening a new one
-                document.querySelectorAll('[data-submenu]').forEach((otherButton) => {
-                    const otherMenu = document.getElementById(otherButton.dataset.submenu);
-                    if (otherMenu && otherMenu !== menu) {
-                        otherMenu.classList.remove('open');
-                        otherButton.classList.remove('open');
-                    }
-                });
-                
-                // Toggle current menu and button state
-                if (isCurrentlyOpen) {
-                    menu.classList.remove('open');
-                    button.classList.remove('open');
-                } else {
-                    menu.classList.add('open');
-                    button.classList.add('open');
-                }
-            });
-        });
-        if (typeof lucide !== 'undefined') lucide.createIcons();
 
         // Toast Notification System
         class Toast {
@@ -383,16 +356,16 @@ $user = \Core\Auth::user();
     <!-- Mobile Bottom Navigation -->
     <nav class="mobile-nav">
         <a href="index.php" class="mobile-nav-link <?= $isActive(['index.php']) ? 'active' : '' ?>">
-            <i data-lucide="layout-dashboard"></i>
-            <span>Dashboard</span>
+            <i data-lucide="home"></i>
+            <span>Inicio</span>
         </a>
         <a href="invoices.php?action=create" class="mobile-nav-link <?= $current === 'invoices.php' && ($_GET['action'] ?? '') === 'create' ? 'active' : '' ?>">
             <i data-lucide="shopping-cart"></i>
             <span>Punto Venta</span>
         </a>
         <a href="invoices.php" class="mobile-nav-link <?= in_array($current, ['invoices.php', 'recurring_invoices.php', 'quotes.php', 'credit_notes.php', 'payments.php'], true) && ($_GET['action'] ?? '') !== 'create' ? 'active' : '' ?>">
-            <i data-lucide="receipt-text"></i>
-            <span>Ventas</span>
+            <i data-lucide="file-text"></i>
+            <span>Facturas</span>
         </a>
         <a href="products.php" class="mobile-nav-link <?= $isActive(['products.php']) ? 'active' : '' ?>">
             <i data-lucide="package"></i>
@@ -402,10 +375,44 @@ $user = \Core\Auth::user();
             <i data-lucide="users"></i>
             <span>Clientes</span>
         </a>
-        <a href="tools.php" class="mobile-nav-link <?= $isActive(['tools.php']) ? 'active' : '' ?>">
-            <i data-lucide="wrench"></i>
-            <span>Herramientas</span>
+        <a href="settings.php" class="mobile-nav-link <?= $isActive(['settings.php', 'tools.php', 'templates.php']) ? 'active' : '' ?>">
+            <i data-lucide="settings"></i>
+            <span>Config</span>
         </a>
     </nav>
+
+    <script>
+        // Menu Management - Submenus closed by default (per BITACORA.md)
+        document.querySelectorAll('[data-submenu]').forEach((button) => {
+            button.addEventListener('click', (e) => {
+                e.preventDefault();
+                const menuId = button.dataset.submenu;
+                const menu = document.getElementById(menuId);
+                
+                if (!menu) return;
+                
+                const isCurrentlyOpen = menu.classList.contains('open');
+                
+                // Close all other submenus when opening a new one
+                document.querySelectorAll('[data-submenu]').forEach((otherButton) => {
+                    const otherMenu = document.getElementById(otherButton.dataset.submenu);
+                    if (otherMenu && otherMenu !== menu) {
+                        otherMenu.classList.remove('open');
+                        otherButton.classList.remove('open');
+                    }
+                });
+                
+                // Toggle current menu and button state
+                if (isCurrentlyOpen) {
+                    menu.classList.remove('open');
+                    button.classList.remove('open');
+                } else {
+                    menu.classList.add('open');
+                    button.classList.add('open');
+                }
+            });
+        });
+        if (typeof lucide !== 'undefined') lucide.createIcons();
+    </script>
 </body>
 </html>

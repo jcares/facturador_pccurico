@@ -13,6 +13,36 @@ use Core\PdfService;
 use Modules\Invoices\Invoice;
 use Modules\Invoices\RecurringInvoice;
 
+function renderEmailTemplate(string $template, array $vars): string
+{
+    foreach ($vars as $key => $value) {
+        $template = str_replace('{' . $key . '}', (string)$value, $template);
+    }
+
+    return $template;
+}
+
+function renderWebpayEmailButton(string $publicUrl, array $settings): string
+{
+    $safeUrl = htmlspecialchars($publicUrl, ENT_QUOTES, 'UTF-8');
+    $buttonText = htmlspecialchars($settings['webpay_button_text'] ?? 'Pagar con Webpay Plus');
+    $baseUrl = rtrim($settings['public_base_url'] ?? '', '/');
+    
+    $buttonImage = !empty($settings['webpay_button_image'])
+        ? $baseUrl . '/uploads/' . htmlspecialchars($settings['webpay_button_image'])
+        : $baseUrl . '/assets/img/transbank-webpay.svg';
+
+    return '
+        <div style="margin: 24px 0; padding: 20px; border: 1px solid #f3c2d2; background: #fff7fb; border-radius: 10px; text-align: center;">
+            <img src="' . $buttonImage . '" alt="Transbank Webpay Plus" style="max-height: 50px; background: #fff; border-radius: 8px; padding: 4px 10px; margin-bottom: 12px;">
+            <br>
+            <a href="' . $safeUrl . '" style="display: inline-block; background: #e0245e; color: #ffffff; text-decoration: none; border-radius: 8px; padding: 12px 24px; font-weight: 800; font-family: sans-serif;">
+                ' . $buttonText . '
+            </a>
+        </div>
+    ';
+}
+
 $cronToken = getenv('CRON_TOKEN') ?: '';
 if (php_sapi_name() !== 'cli' && ($cronToken === '' || !isset($_GET['token']) || !hash_equals($cronToken, $_GET['token']))) {
     header('HTTP/1.0 403 Forbidden');
@@ -101,18 +131,36 @@ try {
         $publicBaseUrl = rtrim($settings['public_base_url'] ?? 'https://pccurico.cl', '/');
         $publicUrl = $publicBaseUrl . "/view.php?token=" . urlencode($invoice['token']);
         $to = $invoice['email'];
-        $subject = "Recordatorio de Pago: Factura #{$invoice['number']}";
-        $message = "Hola {$invoice['client_name']},\n\n";
-        $message .= "Le recordamos que la factura #{$invoice['number']} por un total de $" . number_format($invoice['total'], 0, ',', '.') . " vence el {$invoice['due_date']}.\n\n";
-        $message .= "Puede revisar el detalle y pagar en linea con Transbank Webpay Plus en este enlace seguro:\n\n{$publicUrl}\n\n";
-        $message .= "Se adjunta una copia de la factura.\n\nSaludos,\n" . ($settings['biz_name'] ?? 'PC Curico SpA');
+        $money = (($invoice['currency'] ?? 'CLP') === 'CLP' ? '$' : ($invoice['currency'] ?? 'CLP') . ' ') . number_format((float)$invoice['total'], ($invoice['currency'] ?? 'CLP') === 'CLP' ? 0 : 2, ',', '.');
+        $vars = [
+            'client_name' => $invoice['client_name'],
+            'invoice_number' => $invoice['number'],
+            'invoice_total' => $money,
+            'due_date' => $invoice['due_date'],
+            'public_url' => $publicUrl,
+            'business_name' => $settings['biz_name'] ?? 'PC Curico SpA',
+        ];
 
-        $fullInvoice = Invoice::find((int)$invoice['id']);
-        $pdfContent = PdfService::renderInvoice($fullInvoice ?: $invoice, $settings);
-        $pdfFilename = PdfService::filename($invoice);
+        $subjectTemplate = $settings['email_subject_template'] ?? 'Recordatorio de pago: Documento #{invoice_number}';
+        $bodyTemplate = $settings['email_body_template'] ?? "Hola {client_name},\n\nLe recordamos que el documento #{invoice_number} por {invoice_total} vence el {due_date}.\n\nPuede revisar el detalle en este enlace seguro:\n{public_url}\n\nSaludos,\n{business_name}";
+        $subject = renderEmailTemplate($subjectTemplate, $vars);
+        $plainMessage = renderEmailTemplate($bodyTemplate, $vars);
+        $message = nl2br(htmlspecialchars($plainMessage, ENT_QUOTES, 'UTF-8'));
+
+        if (($settings['email_include_webpay_button'] ?? '1') === '1') {
+            $message .= renderWebpayEmailButton($publicUrl, $settings);
+        }
+
+        $pdfContent = null;
+        $pdfFilename = null;
+        if (($settings['email_attach_pdf'] ?? '0') === '1') {
+            $fullInvoice = Invoice::find((int)$invoice['id']);
+            $pdfContent = PdfService::renderInvoice($fullInvoice ?: $invoice, $settings);
+            $pdfFilename = PdfService::filename($invoice);
+        }
 
         if (Mailer::sendReminder($to, $subject, $message, $pdfContent, $pdfFilename)) {
-            echo "-> Email sent to {$to} with Link: {$publicUrl} and PDF attachment: {$pdfFilename}\n";
+            echo "-> Email sent to {$to} with Link: {$publicUrl}" . ($pdfFilename ? " and PDF attachment: {$pdfFilename}" : " without PDF attachment") . "\n";
         } else {
             echo "-> Email failed for {$to}\n";
         }

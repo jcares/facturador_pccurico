@@ -24,9 +24,10 @@ class Product
     {
         $db = Database::getInstance();
         $stmt = $db->query("
-            SELECT p.*, c.name as category_name 
+            SELECT p.*, c.name as category_name, parent.name as parent_category_name
             FROM products p 
             LEFT JOIN categories c ON p.category_id = c.id 
+            LEFT JOIN categories parent ON c.parent_id = parent.id
             ORDER BY p.id DESC
         ");
         return $stmt->fetchAll();
@@ -47,7 +48,7 @@ class Product
         }
         
         $db = Database::getInstance();
-        $stmt = $db->prepare("INSERT INTO products (name, sku, price, currency, category_id, tax_rate, stock) VALUES (?, ?, ?, ?, ?, ?, ?)");
+        $stmt = $db->prepare("INSERT INTO products (name, sku, price, currency, category_id, price_unit, tax_rate, stock) VALUES (?, ?, ?, ?, ?, ?, ?, ?)");
         $sku = !empty($data['sku']) ? htmlspecialchars(trim($data['sku'])) : self::generateSku($data['name']);
         return $stmt->execute([
             htmlspecialchars(trim($data['name'])),
@@ -55,8 +56,9 @@ class Product
             floatval($data['price']),
             htmlspecialchars(trim($data['currency'] ?? 'CLP')),
             !empty($data['category_id']) ? intval($data['category_id']) : null,
+            self::normalizePriceUnit($data['price_unit'] ?? 'unit'),
             floatval($data['tax_rate'] ?? 0.19),
-            intval($data['stock'] ?? 0)
+            floatval($data['stock'] ?? 0)
         ]);
     }
 
@@ -67,7 +69,7 @@ class Product
         }
 
         $db = Database::getInstance();
-        $stmt = $db->prepare("UPDATE products SET name = ?, sku = ?, price = ?, currency = ?, category_id = ?, tax_rate = ?, stock = ? WHERE id = ?");
+        $stmt = $db->prepare("UPDATE products SET name = ?, sku = ?, price = ?, currency = ?, category_id = ?, price_unit = ?, tax_rate = ?, stock = ? WHERE id = ?");
         $sku = !empty($data['sku']) ? htmlspecialchars(trim($data['sku'])) : self::generateSku($data['name']);
 
         return $stmt->execute([
@@ -76,8 +78,9 @@ class Product
             floatval($data['price']),
             htmlspecialchars(trim($data['currency'] ?? 'CLP')),
             !empty($data['category_id']) ? intval($data['category_id']) : null,
+            self::normalizePriceUnit($data['price_unit'] ?? 'unit'),
             floatval($data['tax_rate'] ?? 0.19),
-            intval($data['stock'] ?? 0),
+            floatval($data['stock'] ?? 0),
             (int)$id
         ]);
     }
@@ -97,5 +100,11 @@ class Product
         
         $stmt = $db->prepare("DELETE FROM products WHERE id = ?");
         return $stmt->execute([(int)$id]);
+    }
+
+    private static function normalizePriceUnit($value)
+    {
+        $value = (string)$value;
+        return in_array($value, ['unit', 'meter'], true) ? $value : 'unit';
     }
 }

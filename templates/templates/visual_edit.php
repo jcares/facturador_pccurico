@@ -92,6 +92,23 @@
                                         <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
                                             <input type="checkbox" name="blocks[<?= $index ?>][options][show_tax]" <?= ($block['options']['show_tax'] ?? true) ? 'checked' : '' ?> onchange="updatePreview()"> Mostrar IVA
                                         </label>
+                                    <?php elseif ($block['id'] === 'webpay_payment'): ?>
+                                        <div style="grid-column: 1 / -1;">
+                                            <label style="display: block; margin-bottom: 8px;">Texto del boton:</label>
+                                            <input type="text" name="blocks[<?= $index ?>][options][text]" value="<?= htmlspecialchars($block['options']['text'] ?? 'Pagar con Webpay Plus') ?>" style="width: 100%; margin-bottom: 15px;" oninput="updatePreview()">
+                                            
+                                            <div class="range-group" style="margin-bottom: 15px;">
+                                                <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                                                    <span style="font-weight: 500;">Ancho de Imagen Webpay</span>
+                                                    <span style="color: var(--primary); font-weight: 700;" id="webpay-size-val-<?= $index ?>"><?= htmlspecialchars($block['options']['button_width'] ?? '200') ?>px</span>
+                                                </div>
+                                                <input type="range" name="blocks[<?= $index ?>][options][button_width]" min="100" max="500" step="10" value="<?= htmlspecialchars($block['options']['button_width'] ?? '200') ?>" class="modern-range" oninput="document.getElementById('webpay-size-val-<?= $index ?>').innerText = this.value + 'px'; document.getElementById('webpay-preview-img-<?= $index ?>').style.width = this.value + 'px'; updatePreview()">
+                                            </div>
+
+                                            <div style="margin-top: 10px; padding: 15px; background: white; border: 1px solid rgba(224,36,94,0.2); border-radius: 8px; text-align: center;">
+                                                <img src="assets/img/transbank-webpay.svg" alt="Transbank Webpay Plus" id="webpay-preview-img-<?= $index ?>" style="width: <?= htmlspecialchars($block['options']['button_width'] ?? '200') ?>px;">
+                                            </div>
+                                        </div>
                                     <?php elseif (in_array($block['id'], ['footer', 'notes', 'greeting', 'message', 'button', 'signature'])): ?>
                                         <div style="grid-column: 1 / -1;">
                                             <label style="display: block; margin-bottom: 8px;">Contenido Personalizado:</label>

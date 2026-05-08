@@ -1,5 +1,15 @@
 <?php
-session_start();
+header('Content-Type: text/html; charset=utf-8');
+
+// Verificar si el sistema está instalado antes de cargar bootstrap
+if (!defined('ROOT_PATH')) {
+    define('ROOT_PATH', dirname(__DIR__));
+}
+if (!file_exists(ROOT_PATH . '/storage/installed.lock')) {
+    header('Location: install.php');
+    exit;
+}
+
 require_once __DIR__ . '/../bootstrap/app.php';
 
 use Core\Auth;
@@ -33,7 +43,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <link rel="stylesheet" href="assets/css/style.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;800&display=swap" rel="stylesheet">
 </head>
-<body>
+<body class="login-page">
     <div class="wizard-container">
         <div class="glass-card">
             <h1>Bienvenido</h1>

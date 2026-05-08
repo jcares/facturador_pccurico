@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="220" height="54" viewBox="0 0 220 54" role="img" aria-label="Transbank Webpay Plus">
+  <rect width="220" height="54" rx="10" fill="#fff"/>
+  <text x="18" y="24" font-family="Arial, Helvetica, sans-serif" font-size="18" font-weight="700" fill="#233876">transbank</text>
+  <text x="18" y="42" font-family="Arial, Helvetica, sans-serif" font-size="16" font-weight="700" fill="#e0245e">Webpay Plus</text>
+  <circle cx="180" cy="18" r="8" fill="#e0245e"/>
+  <circle cx="194" cy="18" r="8" fill="#f59e0b"/>
+  <circle cx="187" cy="31" r="8" fill="#2563eb"/>
+</svg>

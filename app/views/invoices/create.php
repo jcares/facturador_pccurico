@@ -6,14 +6,16 @@ $productData = array_map(static function ($product) {
         'sku' => (string)($product['sku'] ?? ''),
         'price' => (float)$product['price'],
         'currency' => (string)($product['currency'] ?? 'CLP'),
+        'price_unit' => (string)($product['price_unit'] ?? 'unit'),
     ];
 }, $products ?? []);
 
 $renderProductOptions = static function () use ($productData): void {
     echo '<option value="">Seleccione producto...</option>';
     foreach ($productData as $product) {
-        $label = trim($product['name'] . ' (' . $product['sku'] . ') - ' . $product['currency']);
-        echo '<option value="' . (int)$product['id'] . '" data-price="' . htmlspecialchars((string)$product['price'], ENT_QUOTES, 'UTF-8') . '" data-currency="' . htmlspecialchars($product['currency'], ENT_QUOTES, 'UTF-8') . '">';
+        $unitLabel = $product['price_unit'] === 'meter' ? 'metro' : 'unidad';
+        $label = trim($product['name'] . ' (' . $product['sku'] . ') - ' . $product['currency'] . ' / ' . $unitLabel);
+        echo '<option value="' . (int)$product['id'] . '" data-price="' . htmlspecialchars((string)$product['price'], ENT_QUOTES, 'UTF-8') . '" data-currency="' . htmlspecialchars($product['currency'], ENT_QUOTES, 'UTF-8') . '" data-price-unit="' . htmlspecialchars($product['price_unit'], ENT_QUOTES, 'UTF-8') . '">';
         echo htmlspecialchars($label, ENT_QUOTES, 'UTF-8');
         echo '</option>';
     }
@@ -25,7 +27,8 @@ $renderProductOptions = static function () use ($productData): void {
         <h2 style="font-weight: 800; margin: 0;">Nueva Venta</h2>
         <div style="display: flex; gap: 10px; flex-wrap: wrap; justify-content: flex-end;">
             <a href="invoices.php" class="btn-secondary" style="text-decoration: none;">Cancelar</a>
-            <button type="submit" form="invoice-form" class="btn-primary" style="width: auto; margin-top: 0; padding: 10px 20px;">Guardar Documento</button>
+            <button type="submit" form="invoice-form" name="save_action" value="save" class="btn-primary" style="width: auto; margin-top: 0; padding: 10px 20px;">Solo Guardar</button>
+            <button type="submit" form="invoice-form" name="save_action" value="send" class="btn-primary" style="width: auto; margin-top: 0; padding: 10px 20px; background: var(--success, #10b981);">Guardar y Enviar</button>
         </div>
     </div>
 
@@ -133,7 +136,7 @@ $renderProductOptions = static function () use ($productData): void {
                             <div class="row-rate-display" style="font-size: 0.72rem; color: var(--text-muted); margin-top: 6px;"></div>
                         </td>
                         <td style="padding: 12px;">
-                            <input type="number" name="qty[]" value="1" min="1" class="form-control qty-input" aria-label="Cantidad de la linea" style="text-align: right;">
+                            <input type="number" name="qty[]" value="1" min="0.01" step="0.01" class="form-control qty-input" aria-label="Cantidad de la linea" style="text-align: right;">
                         </td>
                         <td style="padding: 12px;">
                             <input type="number" name="price[]" value="0" step="0.01" min="0" class="form-control price-input" aria-label="Precio neto de la linea" style="text-align: right;">
@@ -215,8 +218,9 @@ $renderProductOptions = static function () use ($productData): void {
 
     function optionHtml() {
         return '<option value="">Seleccione producto...</option>' + products.map((product) => {
-            const label = `${product.name} (${product.sku}) - ${product.currency}`;
-            return `<option value="${product.id}" data-price="${product.price}" data-currency="${product.currency}">${escapeHtml(label)}</option>`;
+            const unitLabel = product.price_unit === 'meter' ? 'metro' : 'unidad';
+            const label = `${product.name} (${product.sku}) - ${product.currency} / ${unitLabel}`;
+            return `<option value="${product.id}" data-price="${product.price}" data-currency="${product.currency}" data-price-unit="${product.price_unit}">${escapeHtml(label)}</option>`;
         }).join('');
     }
 
@@ -240,7 +244,7 @@ $renderProductOptions = static function () use ($productData): void {
                 <div class="row-rate-display" style="font-size: 0.72rem; color: var(--text-muted); margin-top: 6px;"></div>
             </td>
             <td style="padding: 12px;">
-                <input type="number" name="qty[]" value="1" min="1" class="form-control qty-input" aria-label="Cantidad de la linea" style="text-align: right;">
+                <input type="number" name="qty[]" value="1" min="0.01" step="0.01" class="form-control qty-input" aria-label="Cantidad de la linea" style="text-align: right;">
             </td>
             <td style="padding: 12px;">
                 <input type="number" name="price[]" value="0" step="0.01" min="0" class="form-control price-input" aria-label="Precio neto de la linea" style="text-align: right;">
@@ -270,8 +274,8 @@ $renderProductOptions = static function () use ($productData): void {
             const converted = convert(product.price, product.currency, currency);
             priceField.value = converted.toFixed(decimals(currency));
             rateDisplay.textContent = product.currency === currency
-                ? `Producto en ${currency}`
-                : `${money(product.price, product.currency)} convertido a ${currency}`;
+                ? `Producto en ${currency} por ${product.price_unit === 'meter' ? 'metro' : 'unidad'}`
+                : `${money(product.price, product.currency)} por ${product.price_unit === 'meter' ? 'metro' : 'unidad'} convertido a ${currency}`;
         } else if (!product) {
             rateDisplay.textContent = '';
         }

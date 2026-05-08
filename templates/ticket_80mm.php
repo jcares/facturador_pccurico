@@ -70,7 +70,7 @@ $money = function ($amount) use ($currency) {
                 <?php foreach($invoice['items'] as $item): ?>
                     <tr class="item-row">
                         <td class="text-left">
-                            <?= (int)$item['qty'] ?>x <?= htmlspecialchars($item['product_name'] ?? 'Item') ?><br>
+                            <?= number_format((float)$item['qty'], floor((float)$item['qty']) == (float)$item['qty'] ? 0 : 2, ',', '.') ?>x <?= htmlspecialchars($item['product_name'] ?? 'Item') ?><br>
                             <small><?= $money($item['price']) ?> c/u</small>
                         </td>
                         <td class="text-right" style="vertical-align: bottom;"><?= $money($item['total']) ?></td>

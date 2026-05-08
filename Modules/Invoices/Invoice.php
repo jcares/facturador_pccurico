@@ -160,7 +160,7 @@ class Invoice
             $stmtStock = $db->prepare("UPDATE products SET stock = stock + ? WHERE id = ?");
             foreach ($invoice['items'] as $item) {
                 if (!empty($item['product_id'])) {
-                    $stmtStock->execute([(int)$item['qty'], (int)$item['product_id']]);
+                    $stmtStock->execute([(float)$item['qty'], (int)$item['product_id']]);
                 }
             }
 

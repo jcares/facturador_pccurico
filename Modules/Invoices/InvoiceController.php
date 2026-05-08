@@ -94,7 +94,7 @@ class InvoiceController extends Controller
                 foreach ($_POST['product_id'] as $index => $pid) {
                     $productId = Security::cleanInt($pid);
                     $product = $productId > 0 ? Product::find($productId) : null;
-                    $qty = max(0, Security::cleanInt($_POST['qty'][$index] ?? 0));
+                    $qty = max(0, Security::cleanDecimal($_POST['qty'][$index] ?? 0));
 
                     if (!$product || $qty <= 0) {
                         continue;
@@ -170,7 +170,13 @@ class InvoiceController extends Controller
                         'exchange_rate' => $rates[$invoiceCurrency] ?? 1.0,
                     ], $items);
                 }
-                $this->redirect('invoices.php?id=' . $invoiceId);
+
+                $saveAction = $_POST['save_action'] ?? 'save';
+                if ($saveAction === 'send') {
+                    $this->redirect('invoices.php?action=send&id=' . $invoiceId);
+                } else {
+                    $this->redirect('invoices.php?id=' . $invoiceId);
+                }
             } catch (\Exception $e) {
                 Logger::error("Invoice Creation Failed: " . $e->getMessage());
                 $this->redirect('invoices.php?action=create&error=db_error');
@@ -220,6 +226,69 @@ class InvoiceController extends Controller
 
         $templateFile = \ROOT_PATH . "/templates/invoice_{$format}.php";
 
+        if ($format === 'a4') {
+            // Use the default invoice template
+            $stmt = $db->prepare("SELECT config_json FROM document_templates WHERE type = 'invoice' AND is_default = 1 LIMIT 1");
+            $stmt->execute();
+            $template = $stmt->fetch();
+
+            if ($template) {
+                $data = [
+                    'settings' => $settings,
+                    'client' => [
+                        'name' => $invoice['client_name'] ?? 'Cliente',
+                        'rut' => $invoice['client_rut'] ?? '',
+                        'address' => $invoice['client_address'] ?? ''
+                    ],
+                    'invoice' => [
+                        'number' => $invoice['number'] ?? '000',
+                        'created_at' => $invoice['created_at'] ?? date('Y-m-d'),
+                        'subtotal' => $invoice['subtotal'] ?? 0,
+                        'tax' => $invoice['tax'] ?? 0,
+                        'total' => $invoice['total'] ?? 0,
+                        'notes' => $invoice['notes'] ?? '',
+                        'public_url' => ($settings['app_url'] ?? '') . '/view.php?token=' . ($invoice['token'] ?? '')
+                    ],
+                    'items' => array_map(function($item) {
+                        return [
+                            'sku' => $item['product_sku'] ?? '',
+                            'name' => $item['product_name'] ?? 'Producto',
+                            'quantity' => $item['qty'] ?? 1,
+                            'price' => $item['price'] ?? 0,
+                            'subtotal' => $item['total'] ?? 0
+                        ];
+                    }, $invoice['items'] ?? [])
+                ];
+
+                require_once \ROOT_PATH . '/Core/VisualTemplateRenderer.php';
+                $renderedBody = \Core\VisualTemplateRenderer::render($template['config_json'], $data);
+                
+                // Wrap in print layout
+                ?>
+                <!DOCTYPE html>
+                <html lang="es">
+                <head>
+                    <meta charset="UTF-8">
+                    <title>Factura <?= htmlspecialchars($invoice['number']) ?></title>
+                    <style>
+                        body { margin: 0; padding: 10mm; font-family: helvetica, Arial, sans-serif; font-size: 11px; color: #333; }
+                        .no-print { text-align: center; margin-bottom: 20px; }
+                        .no-print button { padding: 10px 20px; background: #3b82f6; color: white; border: none; border-radius: 5px; cursor: pointer; }
+                        @media print { .no-print { display: none; } body { padding: 0; } }
+                    </style>
+                </head>
+                <body onload="window.print()">
+                    <div class="no-print">
+                        <button onclick="window.print()">Imprimir Documento</button>
+                    </div>
+                    <?= $renderedBody ?>
+                </body>
+                </html>
+                <?php
+                return;
+            }
+        }
+
         if (!file_exists($templateFile)) {
             http_response_code(404);
             echo 'Plantilla no encontrada.';
@@ -251,5 +320,57 @@ class InvoiceController extends Controller
             Logger::error("Invoice Cancel Failed: " . $e->getMessage());
             $this->redirect('invoices.php?error=cancel_failed');
         }
+    }
+
+    public function send()
+    {
+        $id = Security::cleanInt($_GET['id'] ?? 0);
+        if ($id <= 0) {
+            $this->redirect('invoices.php?error=invalid_invoice');
+        }
+
+        $invoice = Invoice::find($id);
+        if (!$invoice || empty($invoice['client_email'])) {
+            $this->redirect('invoices.php?id=' . $id . '&error=missing_email');
+        }
+
+        $settings = \Core\Config::getAll();
+        $pdfContent = \Core\PdfService::renderInvoice($invoice, $settings);
+        $pdfName = \Core\PdfService::filename($invoice);
+
+        $subject = "Factura " . $invoice['number'] . " - " . ($settings['biz_name'] ?? 'Facturador');
+        $body = "Estimado cliente,<br><br>Adjuntamos su documento " . $invoice['number'] . ".<br><br>Atentamente,<br>" . ($settings['biz_name'] ?? 'Facturador');
+
+        try {
+            \Core\Mailer::sendReminder($invoice['client_email'], $subject, $body, $pdfContent, $pdfName);
+            $this->redirect('invoices.php?id=' . $id . '&success=sent');
+        } catch (\Exception $e) {
+            Logger::error("Failed to send invoice email: " . $e->getMessage());
+            $this->redirect('invoices.php?id=' . $id . '&error=send_failed');
+        }
+    }
+
+    public function download()
+    {
+        $id = Security::cleanInt($_GET['id'] ?? 0);
+        if ($id <= 0) {
+            $this->redirect('invoices.php?error=invalid_invoice');
+        }
+
+        $invoice = Invoice::find($id);
+        if (!$invoice) {
+            $this->redirect('invoices.php?error=invoice_not_found');
+        }
+
+        $settings = \Core\Config::getAll();
+        $content = \Core\PdfService::renderInvoice($invoice, $settings);
+        $filename = \Core\PdfService::filename($invoice);
+        $isPdf = \Core\PdfService::hasPdfGenerator();
+
+        header('Content-Type: ' . ($isPdf ? 'application/pdf' : 'text/html'));
+        header('Content-Disposition: attachment; filename="' . $filename . '"');
+        header('Content-Length: ' . strlen($content));
+        echo $content;
+        exit;
     }
 }

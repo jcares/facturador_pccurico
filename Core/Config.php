@@ -4,6 +4,7 @@ namespace Core;
 
 class Config
 {
+    // Global configuration helper
     private static $settings = [];
 
     public static function load($settings)
@@ -25,5 +26,25 @@ class Config
             return $value;
         }
         return self::$settings[$key] ?? $default;
+    }
+
+    /**
+     * Get all settings from the database as an associative array.
+     * Used by pages that need the full settings context (company, email, product settings).
+     */
+    public static function getAll()
+    {
+        try {
+            $db = Database::getInstance();
+            $rows = $db->query("SELECT `key`, `value` FROM settings")->fetchAll(\PDO::FETCH_ASSOC);
+            $result = [];
+            foreach ($rows as $row) {
+                $result[$row['key']] = $row['value'];
+            }
+            return $result;
+        } catch (\Exception $e) {
+            Logger::error("Config::getAll() failed: " . $e->getMessage());
+            return [];
+        }
     }
 }

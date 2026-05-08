@@ -186,7 +186,7 @@ class RecurringInvoice
                 `id` INT AUTO_INCREMENT PRIMARY KEY,
                 `recurring_invoice_id` INT NOT NULL,
                 `product_id` INT NOT NULL,
-                `qty` INT NOT NULL,
+                `qty` DECIMAL(12,2) NOT NULL,
                 `price` DECIMAL(15,2) NOT NULL,
                 `original_price` DECIMAL(15,2) NULL,
                 `original_currency` VARCHAR(10) NULL,

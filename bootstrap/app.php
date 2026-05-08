@@ -7,6 +7,17 @@ if (!defined('ROOT_PATH')) {
     define('ROOT_PATH', dirname(__DIR__));
 }
 
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
+
+// Si el sistema no está instalado, redirigir al wizard (excepto si ya estamos en install.php)
+$currentScript = basename($_SERVER['SCRIPT_FILENAME'] ?? '');
+if ($currentScript !== 'install.php' && !file_exists(ROOT_PATH . '/storage/installed.lock')) {
+    header('Location: install.php');
+    exit;
+}
+
 require_once __DIR__ . '/../Core/Config.php';
 require_once __DIR__ . '/../Core/Logger.php';
 require_once __DIR__ . '/../Core/ErrorHandler.php';

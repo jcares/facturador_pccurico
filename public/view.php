@@ -75,7 +75,8 @@ foreach($settingsRaw as $s) {
         body { background: #f8fafc; color: #334155; padding: 40px 20px; }
         .public-container { max-width: 800px; margin: 0 auto; }
         .invoice-paper { background: white; border-radius: 12px; padding: 40px; box-shadow: 0 10px 25px rgba(0,0,0,0.05); }
-        .btn-webpay { background: #e0245e; color: white; border: none; padding: 15px 30px; border-radius: 8px; font-weight: 700; font-size: 1.1rem; cursor: pointer; display: inline-block; text-decoration: none; text-align: center; width: 100%; transition: opacity 0.2s; }
+        .btn-webpay { background: #e0245e; color: white; border: none; padding: 13px 24px; border-radius: 8px; font-weight: 700; font-size: 1.05rem; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 14px; text-decoration: none; text-align: center; width: 100%; transition: opacity 0.2s; }
+        .btn-webpay img { height: 34px; width: auto; background: white; border-radius: 6px; padding: 4px 8px; }
         .btn-webpay:hover { opacity: 0.9; }
     </style>
 </head>
@@ -111,7 +112,10 @@ foreach($settingsRaw as $s) {
                 <!-- Aquí enviaremos el formulario a webpay_init.php -->
                 <form action="webpay_init.php" method="POST">
                     <input type="hidden" name="token" value="<?= htmlspecialchars($token) ?>">
-                    <button type="submit" class="btn-webpay">Pagar con Transbank Webpay Plus</button>
+                    <button type="submit" class="btn-webpay">
+                        <img src="assets/img/transbank-webpay.svg" alt="Transbank Webpay Plus">
+                        <span>Pagar ahora</span>
+                    </button>
                 </form>
             </div>
         <?php else: ?>
