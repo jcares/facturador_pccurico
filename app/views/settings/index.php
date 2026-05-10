@@ -16,48 +16,24 @@ $defaultEmailSubject = 'Recordatorio de pago: Documento #{invoice_number}';
 $defaultEmailBody = "Hola {client_name},\n\nLe recordamos que el documento #{invoice_number} por {invoice_total} vence el {due_date}.\n\nPuede revisar el detalle en este enlace seguro:\n{public_url}\n\nSaludos,\n{business_name}";
 ?>
 
-<div style="max-width: 1180px; margin: 0 auto;">
-    <div class="flex-between" style="margin-bottom: 24px;">
-        <div>
-            <h2 style="font-weight: 800; margin: 0;">Configuracion</h2>
-            <p style="color: var(--text-muted); margin: 6px 0 0;"><?= htmlspecialchars($meta['label'] ?? 'Configuracion') ?></p>
-        </div>
-        <a href="tools.php" class="btn-secondary">Herramientas</a>
-    </div>
+<div style="max-width: 800px; margin: 0 auto;">
+     <div class="flex-between" style="margin-bottom: 24px;">
+         <div>
+             <h2 style="font-weight: 800; margin: 0;">Configuracion</h2>
+             <p style="color: var(--text-muted); margin: 6px 0 0;"><?= htmlspecialchars($meta['label'] ?? 'Configuracion') ?></p>
+         </div>
+         <a href="tools.php" class="btn-secondary">Herramientas</a>
+     </div>
 
-    <?php if(isset($_GET['success'])): ?>
-        <div class="alert alert-success">Configuracion guardada exitosamente.</div>
-    <?php endif; ?>
+     <?php if(isset($_GET['success'])): ?>
+         <div class="alert alert-success">Configuracion guardada exitosamente.</div>
+     <?php endif; ?>
 
-    <?php if(isset($_GET['error'])): ?>
-        <div class="alert alert-error">No se pudo guardar la configuracion.</div>
-    <?php endif; ?>
+     <?php if(isset($_GET['error'])): ?>
+         <div class="alert alert-error">No se pudo guardar la configuracion.</div>
+     <?php endif; ?>
 
-    <div class="main-grid" style="display: grid; grid-template-columns: 320px minmax(0, 1fr); gap: 24px; align-items: start;">
-        <aside class="glass-card" style="padding: 18px;">
-            <?php foreach (($sections ?? []) as $group): ?>
-                <div style="margin-bottom: 20px;">
-                    <div style="font-size: 0.72rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.08em; font-weight: 800; margin: 0 0 10px 6px;">
-                        <?= htmlspecialchars($group['title']) ?>
-                    </div>
-                    <div style="display: grid; gap: 6px;">
-                        <?php foreach ($group['items'] as $key => $item): ?>
-                            <?php
-                                $href = $item['href'] ?? ('settings.php?section=' . urlencode($key));
-                                $active = $section === $key ? 'background: rgba(16,185,129,0.14); color: var(--primary); border-color: rgba(16,185,129,0.3);' : 'color: var(--text-main); border-color: transparent;';
-                            ?>
-                            <a href="<?= htmlspecialchars($href) ?>" style="display: flex; align-items: center; gap: 10px; padding: 10px 12px; border: 1px solid; border-radius: 8px; text-decoration: none; font-size: 0.9rem; <?= $active ?>">
-                                <i data-lucide="<?= htmlspecialchars($item['icon'] ?? 'settings') ?>" style="width: 16px; height: 16px;"></i>
-                                <span><?= htmlspecialchars($item['label']) ?></span>
-                            </a>
-                        <?php endforeach; ?>
-                    </div>
-                </div>
-            <?php endforeach; ?>
-        </aside>
-
-        <section>
-            <form action="settings.php?action=update" method="POST" enctype="multipart/form-data">
+     <form action="settings.php?action=update" method="POST" enctype="multipart/form-data" style="display: flex; flex-direction: column; gap: 24px;">
                 <?= \Core\Security::csrfField() ?>
                 <input type="hidden" name="section" value="<?= htmlspecialchars($section) ?>">
 
@@ -141,53 +117,107 @@ $defaultEmailBody = "Hola {client_name},\n\nLe recordamos que el documento #{inv
                     </div>
                     <button type="submit" class="btn-primary" style="width: 100%; padding: 15px;">Guardar Configuracion</button>
 
-                <?php elseif ($section === 'payments'): ?>
-                    <div class="glass-card" style="margin-bottom: 24px;">
-                        <h3 class="section-heading" style="color: #e0245e;">Payment Settings</h3>
-                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
-                            <div class="form-group">
-                                <label for="webpay_env">Entorno Webpay</label>
-                                <select id="webpay_env" name="webpay_env">
-                                    <option value="integration" <?= ($settings['webpay_env'] ?? 'integration') === 'integration' ? 'selected' : '' ?>>Integracion</option>
-                                    <option value="production" <?= ($settings['webpay_env'] ?? '') === 'production' ? 'selected' : '' ?>>Produccion</option>
-                                </select>
-                            </div>
-                            <div class="form-group">
-                                <label for="webpay_cc">Commerce Code</label>
-                                <input type="text" id="webpay_cc" name="webpay_cc" value="<?= htmlspecialchars($settings['webpay_cc'] ?? '') ?>">
-                            </div>
-                        </div>
-                        <div class="form-group">
-                            <label for="webpay_key">API Key Secret</label>
-                            <input type="password" id="webpay_key" name="webpay_key" value="<?= htmlspecialchars($settings['webpay_key'] ?? '') ?>">
-                        </div>
-                    </div>
+<?php elseif ($section === 'payments'): ?>
+                     <div class="glass-card" style="margin-bottom: 24px;">
+                         <div style="display: flex; align-items: center; gap: 14px; margin-bottom: 12px;">
+                             <i data-lucide="credit-card" style="color: #e0245e; width: 24px; height: 24px;"></i>
+                             <h3 class="section-heading" style="margin: 0;">Configuración de Pagos</h3>
+                         </div>
+                         <p style="color: var(--text-muted); margin-bottom: 20px;">Configura Webpay Plus para aceptar pagos con tarjetas de crédito y débito en tu facturador.</p>
+                         
+                         <div class="form-group">
+                             <label for="webpay_env">Ambiente Webpay <span style="color: #f43f5e;">*</span></label>
+                             <select id="webpay_env" name="webpay_env">
+                                 <option value="integration" <?= ($settings['webpay_env'] ?? 'integration') === 'integration' ? 'selected' : '' ?>>Integración (Pruebas)</option>
+                                 <option value="production" <?= ($settings['webpay_env'] ?? '') === 'production' ? 'selected' : '' ?>>Producción</option>
+                             </select>
+                             <small style="color: var(--text-muted);">Define si el plugin operará en el ambiente de pruebas (integración) o en el ambiente real (producción).</small>
+                         </div>
+                         
+                         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+                             <div class="form-group">
+                                 <label for="webpay_cc">Código de Comercio <span style="color: #f43f5e;">*</span></label>
+                                 <input type="text" id="webpay_cc" name="webpay_cc" value="<?= htmlspecialchars($settings['webpay_cc'] ?? '') ?>" placeholder="Ej: 597012345678">
+                                 <small style="color: var(--text-muted);">Siempre comienza con 5970 y debe tener 12 dígitos.</small>
+                             </div>
+                             <div class="form-group">
+                                 <label for="webpay_key">API Key (Llave Secreta) <span style="color: #f43f5e;">*</span></label>
+                                 <input type="password" id="webpay_key" name="webpay_key" value="<?= htmlspecialchars($settings['webpay_key'] ?? '') ?>" placeholder="XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX">
+                                 <small style="color: var(--text-muted);">Llave privada proporcionada por Transbank.</small>
+                             </div>
+                         </div>
+                     </div>
 
-                    <div class="glass-card" style="margin-bottom: 24px;">
-                        <h3 class="section-heading" style="color: var(--primary);">Botón de Pago Webpay</h3>
-                        <p style="color: var(--text-muted); font-size: 0.85rem; margin-bottom: 20px;">Personaliza el texto y la imagen del botón que se muestra en facturas y correos para pagar con Webpay Plus.</p>
-                        <div class="form-group">
-                            <label for="webpay_button_text">Texto del Botón</label>
-                            <input type="text" id="webpay_button_text" name="webpay_button_text" value="<?= htmlspecialchars($settings['webpay_button_text'] ?? 'Pagar con Webpay Plus') ?>" placeholder="Pagar con Webpay Plus">
-                            <small style="color: var(--text-muted);">Texto que aparecerá en el botón de pago</small>
-                        </div>
-                        <div class="form-group">
-                            <label for="webpay_button_image">Imagen del Botón Webpay</label>
-                            <?php if(!empty($settings['webpay_button_image'])): ?>
-                                <div style="margin-bottom: 12px; padding: 15px; background: white; border-radius: 8px; display: inline-block;">
-                                    <img src="uploads/<?= htmlspecialchars($settings['webpay_button_image']) ?>" alt="Webpay Button" style="max-height: 60px; display: block;">
-                                </div>
-                            <?php else: ?>
-                                <div style="margin-bottom: 12px; padding: 15px; background: white; border-radius: 8px; display: inline-block;">
-                                    <img src="assets/img/transbank-webpay.svg" alt="Webpay Default" style="height: 42px; display: block;">
-                                    <small style="color: #666; display: block; margin-top: 6px;">Imagen por defecto</small>
-                                </div>
-                            <?php endif; ?>
-                            <input type="file" id="webpay_button_image" name="webpay_button_image" accept="image/jpeg,image/png,image/gif,image/webp,image/svg+xml">
-                            <small style="color: var(--text-muted);">Sube una imagen personalizada (PNG, JPG, SVG). Si no subes nada, se usa el logo oficial de Transbank.</small>
-                        </div>
-                    </div>
-                    <button type="submit" class="btn-primary" style="width: 100%; padding: 15px;">Guardar Configuracion</button>
+                     <div class="glass-card" style="margin-bottom: 24px;">
+                         <div style="display: flex; align-items: center; gap: 14px; margin-bottom: 12px;">
+                             <i data-lucide="shopping-cart" style="color: var(--primary); width: 24px; height: 24px;"></i>
+                             <h3 class="section-heading" style="margin: 0;">Botón de Pago Webpay</h3>
+                         </div>
+                         <p style="color: var(--text-muted); margin-bottom: 20px;">Personaliza el texto y la imagen del botón que se muestra en facturas y correos para pagar con Webpay Plus.</p>
+                         
+                         <div class="form-group">
+                             <label for="webpay_button_text">Texto del Botón</label>
+                             <input type="text" id="webpay_button_text" name="webpay_button_text" value="<?= htmlspecialchars($settings['webpay_button_text'] ?? 'Pagar con Webpay Plus') ?>" placeholder="Pagar con Webpay Plus">
+                             <small style="color: var(--text-muted);">Texto que aparecerá en el botón de pago.</small>
+                         </div>
+                         
+                         <div class="form-group">
+                             <label for="webpay_button_image">Imagen del Botón Webpay</label>
+                             <?php if(!empty($settings['webpay_button_image'])): ?>
+                                 <div style="margin-bottom: 12px; padding: 15px; background: white; border-radius: 8px; display: inline-block;">
+                                     <img src="uploads/<?= htmlspecialchars($settings['webpay_button_image']) ?>" alt="Webpay Button" style="max-height: 60px; display: block;">
+                                 </div>
+                             <?php else: ?>
+                                 <div style="margin-bottom: 12px; padding: 15px; background: white; border-radius: 8px; display: inline-block;">
+                                     <img src="assets/img/transbank-webpay.svg" alt="Webpay Default" style="height: 42px; display: block;">
+                                     <small style="color: #666; display: block; margin-top: 6px;">Imagen por defecto de Transbank</small>
+                                 </div>
+                             <?php endif; ?>
+                             <input type="file" id="webpay_button_image" name="webpay_button_image" accept="image/jpeg,image/png,image/gif,image/webp,image/svg+xml">
+                             <small style="color: var(--text-muted);">Sube una imagen personalizada (PNG, JPG, SVG). Si no subes nada, se usa el logo oficial de Transbank.</small>
+</div>
+                      </div>
+                      
+                      <div class="glass-card" style="margin-bottom: 24px;">
+                          <div style="display: flex; align-items: center; gap: 14px; margin-bottom: 12px;">
+                              <i data-lucide="hash" style="color: var(--primary); width: 24px; height: 24px;"></i>
+                              <h3 class="section-heading" style="margin: 0;">Formato de Orden de Compra</h3>
+                          </div>
+                          <p style="color: var(--text-muted); margin-bottom: 20px;">Define un formato personalizado para la orden de compra asociada a la transacción en Transbank.</p>
+                          
+                          <div class="form-group">
+                              <label for="buy_order_format">Formato</label>
+                              <input type="text" id="buy_order_format" name="buy_order_format" value="<?= htmlspecialchars($settings['buy_order_format'] ?? 'INV{invoiceId}{random,length=6}') ?>" placeholder="INV{invoiceId}{random,length=6}">
+                              <small style="color: var(--text-muted);">Texto que define cómo se genera la orden de compra.</small>
+                          </div>
+                          
+                          <div style="background: rgba(255,255,255,0.03); border-radius: 8px; padding: 12px; margin-top: 12px;">
+                              <strong style="color: var(--text-main); font-size: 0.9rem;">Componentes disponibles:</strong>
+                              <ul style="margin: 8px 0 0 0; padding-left: 20px; color: var(--text-muted); font-size: 0.85rem;">
+                                  <li><code>{invoiceId}</code> - ID de la factura en el sistema (obligatorio)</li>
+                                  <li><code>{random}</code> - Texto aleatorio de 8 caracteres (opcional)</li>
+                                  <li><code>{random,length=N}</code> - Texto aleatorio con longitud específica (opcional)</li>
+                              </ul>
+                              <div style="margin-top: 8px; color: var(--text-muted); font-size: 0.85rem;">
+                                  <strong>Ejemplo:</strong> <code>INV-{invoiceId}-{random,length=6}</code>
+                              </div>
+                              <div style="margin-top: 6px; color: var(--text-muted); font-size: 0.8rem;">
+                                  Solo caracteres alfanuméricos, guiones (-), guiones bajos (_) o dos puntos (:). Máximo 26 caracteres.
+                              </div>
+                          </div>
+                          
+                          <?php 
+                          $previewFormat = $settings['buy_order_format'] ?? 'INV{invoiceId}{random,length=6}';
+                          $previewOrder = 'INV' . '12345' . substr(str_shuffle('ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789'), 0, 6);
+                          ?>
+                          <div style="margin-top: 12px; padding: 10px; background: rgba(34, 211, 238, 0.1); border-radius: 6px;">
+                              <strong style="color: var(--text-main);">Vista previa:</strong> 
+                              <code style="color: var(--primary);"><?= htmlspecialchars(substr($previewOrder, 0, 26)) ?></code>
+                              <span style="color: var(--text-muted); font-size: 0.85rem;">(13 caracteres)</span>
+                          </div>
+                      </div>
+                      
+                      <button type="submit" class="btn-primary" style="width: 100%; padding: 15px;">Guardar Configuracion</button>
 
                 <?php elseif ($section === 'taxes'): ?>
                     <div class="glass-card" style="margin-bottom: 24px;">
@@ -285,6 +315,5 @@ $defaultEmailBody = "Hola {client_name},\n\nLe recordamos que el documento #{inv
                     <?php $placeholder($meta['label'] ?? 'Configuracion'); ?>
                 <?php endif; ?>
             </form>
-        </section>
+        </div>
     </div>
-</div>

@@ -1,10 +1,25 @@
+<?php
+$orders = $orders ?? [];
+?>
 <div style="max-width: 1200px; margin: 0 auto;">
-    <div class="flex-between" style="margin-bottom: 24px;">
-        <div>
-            <h2 style="font-weight: 800; margin: 0;">Órdenes de Compra</h2>
-            <p style="color: var(--text-muted); margin: 6px 0 0;">Gestiona las órdenes de compra a proveedores.</p>
+    <div class="glass-card" style="padding: 24px; margin-bottom: 24px;">
+        <div class="flex-between" style="gap: 16px; flex-wrap: wrap;">
+            <div>
+                <h2 style="font-weight: 800; margin: 0; font-size: 1.3rem; color: #f8fafc;">Órdenes de Compra</h2>
+                <p style="color: var(--text-muted); margin: 6px 0 0;">Gestiona las órdenes de compra a proveedores.</p>
+            </div>
+            <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+                <a href="purchase_orders.php?action=create" class="btn-primary" style="white-space: nowrap;">
+                    <i data-lucide="plus"></i> Nueva Orden
+                </a>
+                <a href="tools.php?action=export" class="btn-secondary" style="white-space: nowrap;">
+                    <i data-lucide="download"></i> Exportar
+                </a>
+                <a href="tools.php" class="btn-secondary" style="white-space: nowrap;">
+                    <i data-lucide="upload"></i> Importar
+                </a>
+            </div>
         </div>
-        <a href="purchase_orders.php?action=create" class="btn-primary">Nueva Orden</a>
     </div>
 
     <?php if(isset($_GET['success'])): ?>

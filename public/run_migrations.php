@@ -436,7 +436,7 @@ function runDatabaseMigrations(): array
                 ['id' => 'items', 'label' => 'Tabla de Items', 'position' => 4, 'enabled' => true, 'options' => ['show_sku' => true, 'show_tax' => true]],
                 ['id' => 'webpay_payment', 'label' => 'Pago Webpay', 'position' => 5, 'enabled' => false, 'options' => ['text' => 'Pagar con Webpay Plus']],
                 ['id' => 'notes', 'label' => 'Notas Adicionales', 'position' => 6, 'enabled' => true, 'options' => ['text' => '']],
-                ['id' => 'footer', 'label' => 'Pie de Pagina', 'position' => 7, 'enabled' => true, 'options' => ['text' => 'Generado por Facturador']],
+                ['id' => 'footer', 'label' => 'Pie de Pagina', 'position' => 7, 'enabled' => true, 'options' => ['text' => 'Generado por PCCurico']],
             ],
             'styles' => ['primary_color' => '#3b82f6', 'font_family' => 'sans-serif']
         ];

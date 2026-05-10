@@ -1,9 +1,20 @@
 <div class="glass-card">
-    <div class="flex-between" style="margin-bottom: 30px;">
-        <h3 class="section-heading" style="margin: 0;">Historial de Documentos</h3>
-        <a href="invoices.php?action=create" class="btn-primary link-button">
-            <i data-lucide="plus"></i> Nueva Venta
-        </a>
+    <div class="flex-between" style="margin-bottom: 24px; gap: 16px; flex-wrap: wrap;">
+        <div>
+            <h3 class="section-heading" style="margin: 0;">Historial de Documentos</h3>
+            <p style="margin: 6px 0 0; color: var(--text-muted);">Gestiona facturas, boletas, registros e historial completo de operaciones.</p>
+        </div>
+        <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+            <a href="invoices.php?action=create" class="btn-primary" style="white-space: nowrap;">
+                <i data-lucide="plus"></i> Nueva Venta
+            </a>
+            <a href="tools.php?action=export" class="btn-secondary" style="white-space: nowrap;">
+                <i data-lucide="download"></i> Exportar
+            </a>
+            <a href="tools.php" class="btn-secondary" style="white-space: nowrap;">
+                <i data-lucide="upload"></i> Importar
+            </a>
+        </div>
     </div>
 
     <?php if(empty($invoices)): ?>

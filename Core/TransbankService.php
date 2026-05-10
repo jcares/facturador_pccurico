@@ -6,11 +6,12 @@ class TransbankService
     private $commerceCode;
     private $apiKey;
     private $environment;
+    private $buyOrderFormat;
     
     public function __construct()
     {
         $db = Database::getInstance();
-        $stmt = $db->query("SELECT * FROM settings WHERE `key` IN ('webpay_cc', 'webpay_key', 'webpay_env')");
+        $stmt = $db->query("SELECT * FROM settings WHERE `key` IN ('webpay_cc', 'webpay_key', 'webpay_env', 'buy_order_format')");
         $settings = [];
         foreach($stmt->fetchAll() as $s) {
             $settings[$s['key']] = $s['value'];
@@ -19,6 +20,40 @@ class TransbankService
         $this->commerceCode = $settings['webpay_cc'] ?? '597055555532';
         $this->apiKey = $settings['webpay_key'] ?? '579B532A7440BB0C9079DED94D31EA1615BACEB56610332264630D42D0A36B1C';
         $this->environment = $settings['webpay_env'] ?? 'integration';
+        $this->buyOrderFormat = $settings['buy_order_format'] ?? 'INV{invoiceId}{random,length=6}';
+    }
+    
+    public function generateBuyOrder($invoiceId)
+    {
+        $format = $this->buyOrderFormat;
+        
+        // Replace {invoiceId} with actual invoice ID
+        $format = str_replace('{invoiceId}', $invoiceId, $format);
+        $format = str_replace('{invoice_id}', $invoiceId, $format);
+        
+        // Replace {orderId} with invoice ID (for WordPress compatibility)
+        $format = str_replace('{orderId}', $invoiceId, $format);
+        
+        // Handle {random} or {random,length=N}
+        if (preg_match('/\{random(?:,?\s*length\s*=\s*(\d+))?\}/', $format, $matches)) {
+            $length = isset($matches[1]) ? (int)$matches[1] : 8;
+            $randomStr = $this->generateRandomString($length);
+            $format = preg_replace('/\{random(?:,?\s*length\s*=\s*\d+)?\}/', $randomStr, $format, 1);
+        }
+        
+        // Validate: only alphanumeric, dash, underscore, colon - max 26 chars
+        $format = preg_replace('/[^a-zA-Z0-9\-_:]/', '', $format);
+        return substr($format, 0, 26);
+    }
+    
+    private function generateRandomString($length = 8)
+    {
+        $characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+        $result = '';
+        for ($i = 0; $i < $length; $i++) {
+            $result .= $characters[random_int(0, strlen($characters) - 1)];
+        }
+        return $result;
     }
 
     private function getBaseUrl()

@@ -1,8 +1,25 @@
-<div class="glass-card" style="padding: 20px;">
-    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
-        <h2 style="margin: 0;">Plantillas de Documentos</h2>
-        <a href="tools.php?action=sync" class="btn-primary" style="padding: 10px 15px; border-radius: 8px; text-decoration: none; color: white;">Sincronizar Plantillas</a>
+<?php
+$templates = $templates ?? [];
+?>
+<div style="max-width: 1200px; margin: 0 auto;">
+    <div class="glass-card" style="padding: 24px; margin-bottom: 24px;">
+        <div class="flex-between" style="gap: 16px; flex-wrap: wrap;">
+            <div>
+                <h2 style="font-weight: 800; margin: 0; font-size: 1.3rem; color: #f8fafc;">Plantillas de Documentos</h2>
+                <p style="color: var(--text-muted); margin: 6px 0 0;">Gestiona plantillas para facturas, boletas y otros documentos.</p>
+            </div>
+            <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+                <a href="tools.php?action=sync" class="btn-primary" style="white-space: nowrap;">
+                    <i data-lucide="refresh-cw"></i> Sincronizar
+                </a>
+                <a href="tools.php?action=export" class="btn-secondary" style="white-space: nowrap;">
+                    <i data-lucide="download"></i> Exportar
+                </a>
+            </div>
+        </div>
     </div>
+
+    <div class="glass-card" style="padding: 20px;">
 
     <?php if (isset($_GET['msg'])): ?>
         <div style="background: rgba(16,185,129,0.1); border: 1px solid rgba(16,185,129,0.2); color: #10b981; padding: 15px; border-radius: 8px; margin-bottom: 20px;">

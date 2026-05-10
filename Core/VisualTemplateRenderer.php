@@ -152,7 +152,7 @@ class VisualTemplateRenderer
 
             case 'footer':
                 $out .= '<div style="margin-top: 40px; text-align: center; font-size: 10px; color: #999999; border-top: 1px solid #eeeeee; padding-top: 20px;">';
-                $out .= htmlspecialchars($options['text'] ?? 'Documento generado por Facturador PCcurico');
+                $out .= htmlspecialchars($options['text'] ?? 'Documento generado por PCCurico');
                 $out .= '</div>';
                 break;
 

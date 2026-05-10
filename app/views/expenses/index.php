@@ -1,10 +1,27 @@
+<?php
+$totalMonth = $totalMonth ?? 0;
+$byCategory = $byCategory ?? [];
+$expenses = $expenses ?? [];
+?>
 <div style="max-width: 1200px; margin: 0 auto;">
-    <div class="flex-between" style="margin-bottom: 24px;">
-        <div>
-            <h2 style="font-weight: 800; margin: 0;">Gestión de Gastos</h2>
-            <p style="color: var(--text-muted); margin: 6px 0 0;">Controla y registra todos tus gastos operativos.</p>
+    <div class="glass-card" style="padding: 24px; margin-bottom: 24px;">
+        <div class="flex-between" style="gap: 16px; flex-wrap: wrap;">
+            <div>
+                <h2 style="font-weight: 800; margin: 0; font-size: 1.3rem; color: #f8fafc;">Gestión de Gastos</h2>
+                <p style="color: var(--text-muted); margin: 6px 0 0;">Controla y registra todos tus gastos operativos.</p>
+            </div>
+            <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+                <a href="expenses.php?action=create" class="btn-primary" style="white-space: nowrap;">
+                    <i data-lucide="plus"></i> Nuevo Gasto
+                </a>
+                <a href="tools.php?action=export" class="btn-secondary" style="white-space: nowrap;">
+                    <i data-lucide="download"></i> Exportar
+                </a>
+                <a href="tools.php" class="btn-secondary" style="white-space: nowrap;">
+                    <i data-lucide="upload"></i> Importar
+                </a>
+            </div>
         </div>
-        <a href="expenses.php?action=create" class="btn-primary">Nuevo Gasto</a>
     </div>
 
     <?php if(isset($_GET['success'])): ?>

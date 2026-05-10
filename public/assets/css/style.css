@@ -229,7 +229,7 @@ input.error {
 .nav-parent {
     width: 100%;
     display: flex; align-items: center;
-    justify-content: space-between; gap: 12px;
+    justify-content: flex-start; gap: 12px;
     padding: 12px 14px; color: var(--text-muted);
     background: rgba(255,255,255,0.02);
     border: 1px solid transparent; border-radius: 14px;
@@ -241,6 +241,7 @@ input.error {
 }
 .nav-parent i { width: 18px; height: 18px; }
 .nav-parent i:last-child {
+    margin-left: auto;
     transition: transform 0.3s ease; flex-shrink: 0;
 }
 .nav-parent:hover {

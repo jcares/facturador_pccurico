@@ -8,17 +8,17 @@ use Core\Logger;
 
 class SettingsController extends Controller
 {
-    private $allowedSettings = [
-        'biz_name', 'biz_rut', 'biz_address', 'biz_phone', 'biz_email',
-        'biz_website', 'biz_logo', 'invoice_prefix', 'currency_symbol',
-        'biz_giro', 'webpay_env', 'webpay_cc', 'webpay_key',
-        'webpay_button_text', 'webpay_button_image',
-        'smtp_host', 'smtp_port', 'smtp_user', 'smtp_pass', 'smtp_secure', 'smtp_from',
-        'public_base_url', 'locale_country', 'locale_language', 'locale_timezone',
-        'default_currency', 'default_tax_rate', 'product_default_unit',
-        'email_subject_template', 'email_body_template', 'email_attach_pdf',
-        'email_include_webpay_button'
-    ];
+private $allowedSettings = [
+         'biz_name', 'biz_rut', 'biz_address', 'biz_phone', 'biz_email',
+         'biz_website', 'biz_logo', 'invoice_prefix', 'currency_symbol',
+         'biz_giro', 'webpay_env', 'webpay_cc', 'webpay_key',
+         'webpay_button_text', 'webpay_button_image', 'buy_order_format',
+         'smtp_host', 'smtp_port', 'smtp_user', 'smtp_pass', 'smtp_secure', 'smtp_from',
+         'public_base_url', 'locale_country', 'locale_language', 'locale_timezone',
+         'default_currency', 'default_tax_rate', 'product_default_unit',
+         'email_subject_template', 'email_body_template', 'email_attach_pdf',
+         'email_include_webpay_button'
+     ];
 
     private $sections = [
         'basic' => [
@@ -30,31 +30,17 @@ class SettingsController extends Controller
                 'payments' => ['label' => 'Configuración de Pagos', 'icon' => 'credit-card'],
                 'taxes' => ['label' => 'Configuracion de Impuestos', 'icon' => 'percent', 'href' => 'taxes.php'],
                 'product' => ['label' => 'Configuracion del Producto', 'icon' => 'package', 'href' => 'product_settings.php'],
-                'tasks' => ['label' => 'Configuracion de tareas', 'icon' => 'list-todo'],
-                'expenses' => ['label' => 'Configuracion de gastos', 'icon' => 'wallet'],
-                'workflow' => ['label' => 'Configuracion del flujo de trabajo', 'icon' => 'workflow'],
-                'account' => ['label' => 'Account Management', 'icon' => 'shield-user'],
-                'backup' => ['label' => 'Copia de seguridad | Restaurar', 'icon' => 'database-backup', 'href' => 'tools.php?action=export'],
-                'import-export' => ['label' => 'Importar/Exportar', 'icon' => 'import', 'href' => 'tools.php?action=export'],
+                'email' => ['label' => 'Configuracion del Correo', 'icon' => 'mail', 'href' => 'email_settings.php'],
+                'email-templates' => ['label' => 'Plantillas & Recordatorios', 'icon' => 'send', 'href' => 'email_templates.php'],
             ],
         ],
         'advanced' => [
             'title' => 'Configuracion Avanzada',
             'items' => [
-                'pro' => ['label' => 'Pro', 'icon' => 'badge-check'],
                 'invoice-design' => ['label' => 'Diseno de factura', 'icon' => 'palette', 'href' => 'templates.php'],
-                'custom-fields' => ['label' => 'Campos personalizados', 'icon' => 'text-cursor-input'],
-                'generated-numbers' => ['label' => 'Numeros Generados', 'icon' => 'hash'],
                 'client-portal' => ['label' => 'Portal de Cliente', 'icon' => 'monitor', 'href' => 'client_portal.php'],
-                'electronic-invoicing' => ['label' => 'Facturacion electronica', 'icon' => 'file-check-2'],
-                'email' => ['label' => 'Configuracion del Correo Electronico', 'icon' => 'mail', 'href' => 'email_settings.php'],
-                'email-templates' => ['label' => 'Plantillas & Recordatorios', 'icon' => 'send', 'href' => 'email_templates.php'],
-                'bank-accounts' => ['label' => 'Cuentas Bancarias', 'icon' => 'landmark'],
-                'group-settings' => ['label' => 'Configuracion de grupo', 'icon' => 'layers'],
-                'payment-links' => ['label' => 'Enlaces de pago', 'icon' => 'link-2'],
-                'schedules' => ['label' => 'Horarios', 'icon' => 'calendar-clock'],
-                'users' => ['label' => 'Gestion de Usuarios', 'icon' => 'users'],
                 'system-logs' => ['label' => 'Registros del sistema', 'icon' => 'logs', 'href' => 'tools.php?action=log'],
+                'tools' => ['label' => 'Herramientas | Importar/Exportar', 'icon' => 'tool-case', 'href' => 'tools.php?action=export'],
             ],
         ],
     ];

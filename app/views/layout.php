@@ -14,6 +14,453 @@ $user = \Core\Auth::user();
     <title><?= htmlspecialchars($title ?? 'Resumen General') ?> | FACTURADOR-PCCURICO</title>
     <link rel="icon" type="image/png" href="assets/img/favicon.png">
     <link rel="stylesheet" href="assets/css/style.css?v=<?= time() ?>">
+    <style>
+        :root {
+            color-scheme: dark;
+            --bg: #050812;
+            --surface: rgba(10, 16, 32, 0.96);
+            --panel: rgba(10, 16, 34, 0.94);
+            --panel-soft: rgba(15, 23, 42, 0.92);
+            --panel-border: rgba(71, 85, 105, 0.18);
+            --glass-border: rgba(56, 189, 248, 0.14);
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --text-subtle: #cbd5e1;
+            --primary: #22d3ee;
+            --primary-strong: #7c3aed;
+            --accent: #ec4899;
+            --success: #22c55e;
+            --warning: #facc15;
+            --danger: #f43f5e;
+            --radius: 20px;
+            --shadow: 0 24px 70px rgba(0,0,0,0.35);
+        }
+
+        body {
+            background: radial-gradient(circle at 14% 14%, rgba(34, 211, 238, 0.11), transparent 18%),
+                        radial-gradient(circle at 86% 20%, rgba(124, 58, 237, 0.12), transparent 17%),
+                        radial-gradient(circle at 50% 100%, rgba(59, 130, 246, 0.08), transparent 26%),
+                        #050812;
+            color: var(--text-main);
+        }
+
+        .app-layout {
+            min-height: 100vh;
+            background: transparent;
+        }
+
+        .sidebar {
+            background: rgba(7, 11, 21, 0.94);
+            border-right: 1px solid rgba(56, 189, 248, 0.12);
+            box-shadow: inset 0 0 0 1px rgba(255,255,255,0.02);
+        }
+
+        .brand-block {
+            padding: 24px 20px 20px;
+            border-bottom: 1px solid rgba(56, 189, 248, 0.08);
+            margin-bottom: 22px;
+        }
+
+        .brand-caption {
+            margin-top: 10px;
+            color: var(--text-muted);
+            font-size: 0.92rem;
+            letter-spacing: 0.03em;
+        }
+
+        .nav-menu a,
+        .nav-menu button {
+            display: flex;
+            align-items: center;
+            justify-content: flex-start;
+            gap: 10px;
+            width: 100%;
+            padding: 14px 18px;
+            border-radius: 16px;
+            margin-bottom: 6px;
+            color: var(--text-muted);
+            font-weight: 600;
+            background: transparent;
+            border: none;
+            transition: all 0.2s ease;
+            text-decoration: none;
+        }
+
+        .nav-link i,
+        .nav-parent i,
+        .nav-sub-link i {
+            width: 18px;
+            min-width: 18px;
+        }
+
+        .nav-link:hover,
+        .nav-parent:hover,
+        .nav-sub-link:hover {
+            background: rgba(56, 189, 248, 0.08);
+            color: #fff;
+        }
+
+        .nav-link.active,
+        .nav-sub-link.active,
+        .nav-parent.open {
+            color: var(--primary);
+            background: rgba(15, 23, 42, 0.76);
+            box-shadow: inset 0 0 0 1px rgba(34, 211, 238, 0.16);
+        }
+
+        .nav-submenu {
+            max-height: 0;
+            overflow: hidden;
+            opacity: 0;
+            transition: max-height 0.24s ease, opacity 0.24s ease;
+            margin-bottom: 8px;
+        }
+
+        .nav-submenu.open {
+            max-height: 360px;
+            opacity: 1;
+        }
+
+        .nav-sub-link {
+            padding-left: 44px;
+            color: var(--text-subtle);
+            font-size: 0.95rem;
+            background: rgba(255,255,255,0.03);
+            border-radius: 14px;
+        }
+
+        .nav-sub-link.active {
+            color: #7dd3fc;
+        }
+
+        .nav-section.nav-bottom {
+            margin-top: 22px;
+            padding-top: 18px;
+            border-top: 1px solid rgba(148, 163, 184, 0.12);
+        }
+
+        .nav-link.logout-link {
+            color: #f43f5e;
+        }
+
+        .main-content {
+            background: transparent;
+        }
+
+        .main-header {
+            padding: 24px 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 18px;
+        }
+
+        .header-branding {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .page-title {
+            margin: 0;
+            font-size: 1.55rem;
+            letter-spacing: 0.02em;
+        }
+
+        .header-date {
+            color: var(--text-muted);
+            font-size: 0.95rem;
+        }
+
+        .header-actions {
+            display: flex;
+            gap: 14px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .header-quick-action,
+        .btn-primary,
+        .btn-secondary,
+        .link-button {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            border-radius: 999px;
+            padding: 12px 18px;
+            font-weight: 700;
+            text-decoration: none;
+            border: 1px solid transparent;
+            transition: transform 0.18s ease, box-shadow 0.18s ease, background 0.18s ease;
+        }
+
+        .header-quick-action {
+            background: linear-gradient(135deg, #22d3ee 0%, #7c3aed 100%);
+            color: #020617;
+            box-shadow: 0 18px 35px rgba(34, 211, 238, 0.16);
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #22d3ee 0%, #7c3aed 100%);
+            color: #020617;
+            box-shadow: 0 18px 35px rgba(34, 211, 238, 0.16);
+        }
+
+        .btn-secondary {
+            background: rgba(15, 23, 42, 0.85);
+            color: #fff;
+            border-color: rgba(148, 163, 184, 0.18);
+        }
+
+        .btn-primary:hover,
+        .btn-secondary:hover,
+        .link-button:hover,
+        .header-quick-action:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 24px 45px rgba(34, 211, 238, 0.18);
+        }
+
+        .user-info {
+            text-align: right;
+            min-width: 140px;
+        }
+
+        .user-name {
+            font-weight: 700;
+            color: #f8fafc;
+        }
+
+        .user-role {
+            color: var(--text-muted);
+            font-size: 0.95rem;
+        }
+
+        .user-avatar {
+            width: 44px;
+            height: 44px;
+            border-radius: 50%;
+            display: grid;
+            place-items: center;
+            background: linear-gradient(180deg, rgba(34, 211, 238, 0.18), rgba(124, 58, 237, 0.18));
+            color: #fff;
+            font-weight: 700;
+            box-shadow: inset 0 0 0 1px rgba(255,255,255,0.08);
+        }
+
+        .content-wrapper {
+            padding-bottom: 50px;
+        }
+
+        .glass-card {
+            background: rgba(9, 14, 28, 0.94);
+            border: 1px solid rgba(56, 189, 248, 0.08);
+            border-radius: var(--radius);
+            box-shadow: var(--shadow);
+            backdrop-filter: blur(18px);
+            padding: 24px;
+        }
+
+        .section-heading {
+            color: #f8fafc;
+            font-size: 1.05rem;
+            margin-bottom: 16px;
+            letter-spacing: 0.01em;
+        }
+
+        .stat-grid {
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: 18px;
+            margin-bottom: 24px;
+        }
+
+        .stat-card {
+            position: relative;
+            background: rgba(15, 23, 42, 0.94);
+            border: 1px solid rgba(255,255,255,0.04);
+            border-radius: 22px;
+            padding: 22px;
+            overflow: hidden;
+        }
+
+        .stat-card::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: radial-gradient(circle at top right, rgba(34, 211, 238, 0.16), transparent 22%), radial-gradient(circle at bottom left, rgba(124, 58, 237, 0.14), transparent 18%);
+            pointer-events: none;
+        }
+
+        .stat-card > * {
+            position: relative;
+        }
+
+        .stat-label {
+            color: var(--text-muted);
+            font-size: 0.85rem;
+            margin-bottom: 10px;
+            text-transform: uppercase;
+            letter-spacing: 0.12em;
+        }
+
+        .stat-value {
+            font-size: 2rem;
+            font-weight: 800;
+            color: #fff;
+        }
+
+        .icon-badge {
+            width: 48px;
+            height: 48px;
+            border-radius: 16px;
+            display: grid;
+            place-items: center;
+            background: rgba(15, 23, 42, 0.88);
+            color: #fff;
+        }
+
+        .icon-badge.green { background: rgba(16, 185, 129, 0.22); color: #22c55e; }
+        .icon-badge.blue { background: rgba(59, 130, 246, 0.18); color: #38bdf8; }
+        .icon-badge.yellow { background: rgba(250, 204, 21, 0.18); color: #facc15; }
+
+        .table-container {
+            overflow-x: auto;
+        }
+
+        .table-clean {
+            width: 100%;
+            border-collapse: collapse;
+            min-width: 720px;
+            border-radius: 18px;
+            overflow: hidden;
+        }
+
+        .table-clean th,
+        .table-clean td {
+            padding: 16px 14px;
+            text-align: left;
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+        }
+
+        .table-clean thead tr {
+            background: rgba(15, 23, 42, 0.9);
+        }
+
+        .table-clean tbody tr:hover {
+            background: rgba(255,255,255,0.04);
+        }
+
+        .text-center {
+            text-align: center;
+        }
+
+        .summary-grid {
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: 18px;
+            margin-bottom: 24px;
+        }
+
+        .summary-card {
+            background: rgba(12, 18, 38, 0.9);
+            border: 1px solid rgba(255,255,255,0.05);
+            border-radius: 20px;
+            padding: 22px;
+            box-shadow: inset 0 0 0 1px rgba(255,255,255,0.02);
+        }
+
+        .summary-title {
+            color: var(--text-muted);
+            font-size: 0.85rem;
+            margin-bottom: 10px;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+        }
+
+        .summary-value {
+            font-size: 1.85rem;
+            font-weight: 800;
+            color: #fff;
+            margin-bottom: 8px;
+        }
+
+        .summary-small {
+            color: var(--text-muted);
+            font-size: 0.95rem;
+        }
+
+        .progress-bar {
+            height: 8px;
+            border-radius: 999px;
+            overflow: hidden;
+            background: rgba(255,255,255,0.06);
+            margin-top: 14px;
+        }
+
+        .progress-bar span {
+            display: block;
+            height: 100%;
+            border-radius: 999px;
+            background: linear-gradient(90deg, #22d3ee 0%, #7c3aed 100%);
+        }
+
+        @media (max-width: 900px) {
+            .stat-grid,
+            .summary-grid,
+            .main-grid {
+                grid-template-columns: 1fr;
+            }
+            .header-actions {
+                width: 100%;
+                justify-content: flex-start;
+            }
+            .user-info {
+                text-align: left;
+                width: 100%;
+            }
+            .mobile-nav {
+                display: flex;
+                position: fixed;
+                bottom: 0;
+                left: 0;
+                right: 0;
+                z-index: 20;
+                padding: 8px 10px;
+                background: rgba(7, 11, 21, 0.96);
+                border-top: 1px solid rgba(56, 189, 248, 0.12);
+                backdrop-filter: blur(16px);
+                gap: 6px;
+                justify-content: space-between;
+            }
+            .mobile-nav-link {
+                flex: 1;
+                color: var(--text-muted);
+                text-decoration: none;
+                font-size: 0.75rem;
+                display: inline-flex;
+                flex-direction: column;
+                align-items: center;
+                justify-content: center;
+                gap: 4px;
+                padding: 8px 6px;
+                border-radius: 14px;
+                transition: background 0.2s ease, color 0.2s ease;
+            }
+            .mobile-nav-link.active {
+                background: rgba(15, 23, 42, 0.88);
+                color: #7dd3fc;
+            }
+            .mobile-nav-link i {
+                width: 18px;
+                height: 18px;
+            }
+            .content-wrapper {
+                padding-bottom: 100px;
+            }
+        }
+    </style>
     <script src="assets/js/lucide.min.js?v=20260506-charset"></script>
 </head>
 <body>
@@ -21,7 +468,7 @@ $user = \Core\Auth::user();
         <aside class="sidebar">
             <div class="brand-block">
                 <img src="assets/img/logo.png" alt="PC Curico" class="brand-logo">
-                <p class="brand-caption">POS Facturador</p>
+                <p class="brand-caption">Facturador PCCurico</p>
             </div>
 
             <nav class="nav-menu">
@@ -31,24 +478,24 @@ $user = \Core\Auth::user();
                 <a href="clients.php" class="nav-link <?= $isActive(['clients.php']) ?>">
                     <i data-lucide="users"></i> Clientes
                 </a>
-                <a href="products.php" class="nav-link <?= $isActive(['products.php']) ?>">
-                    <i data-lucide="package"></i> Productos
-                </a>
-                <a href="categories.php" class="nav-link <?= $isActive(['categories.php']) ?>">
-                    <i data-lucide="tags"></i> Categorías
-                </a>
-                <button class="nav-parent" type="button" data-submenu="invoices-menu">
+                <button class="nav-parent <?= in_array($current, ['products.php', 'categories.php'], true) ? 'open' : '' ?>" type="button" data-submenu="products-menu">
+                    <span><i data-lucide="package"></i> Productos</span>
+                    <i data-lucide="chevron-down"></i>
+                </button>
+                <div class="nav-submenu" id="products-menu">
+                    <a href="products.php" class="nav-sub-link <?= $isActive(['products.php']) ?>">Productos</a>
+                    <a href="categories.php" class="nav-sub-link <?= $isActive(['categories.php']) ?>">Categorías</a>
+                </div>
+                <button class="nav-parent <?= in_array($current, ['invoices.php','recurring_invoices.php','credit_notes.php'], true) ? 'open' : '' ?>" type="button" data-submenu="invoices-menu">
                     <span><i data-lucide="file-text"></i> Facturas</span>
                     <i data-lucide="chevron-down"></i>
                 </button>
-                <div class="nav-submenu" id="invoices-menu">
+                <div class="nav-submenu <?= in_array($current, ['invoices.php','recurring_invoices.php','credit_notes.php'], true) ? 'open' : '' ?>" id="invoices-menu">
                     <a href="invoices.php?action=create" class="nav-sub-link <?= $current === 'invoices.php' && ($_GET['action'] ?? '') === 'create' ? 'active' : '' ?>">Crear Factura</a>
                     <a href="invoices.php" class="nav-sub-link <?= $current === 'invoices.php' && ($_GET['action'] ?? '') !== 'create' ? 'active' : '' ?>">Ver Facturas</a>
+                    <a href="recurring_invoices.php" class="nav-sub-link <?= $isActive(['recurring_invoices.php']) ?>">Facturas Recurrentes</a>
                     <a href="credit_notes.php" class="nav-sub-link <?= $isActive(['credit_notes.php']) ?>">Notas de Crédito</a>
                 </div>
-                <a href="recurring_invoices.php" class="nav-link <?= $isActive(['recurring_invoices.php']) ?>">
-                    <i data-lucide="repeat"></i> Facturas Recurrentes
-                </a>
                 <a href="payments.php" class="nav-link <?= $isActive(['payments.php']) ?>">
                     <i data-lucide="credit-card"></i> Pagos
                 </a>
@@ -67,25 +514,9 @@ $user = \Core\Auth::user();
                 <a href="reports.php" class="nav-link <?= $isActive(['reports.php']) ?>">
                     <i data-lucide="bar-chart"></i> Informes
                 </a>
-                <button class="nav-parent" type="button" data-submenu="settings-menu">
-                    <span><i data-lucide="settings"></i> Configuración</span>
-                    <i data-lucide="chevron-down"></i>
-                </button>
-                <div class="nav-submenu" id="settings-menu">
-                    <a href="company.php" class="nav-sub-link <?= $current === 'company.php' ? 'active' : '' ?>">Detalles de la Empresa</a>
-                    <a href="settings.php?section=user" class="nav-sub-link <?= $current === 'settings.php' && ($_GET['section'] ?? '') === 'user' ? 'active' : '' ?>">Detalles de Usuario</a>
-                    <a href="localization.php" class="nav-sub-link <?= $current === 'localization.php' ? 'active' : '' ?>">Localización</a>
-                    <a href="settings.php?section=payments" class="nav-sub-link <?= $current === 'settings.php' && ($_GET['section'] ?? '') === 'payments' ? 'active' : '' ?>">Configuración de Pagos</a>
-                    <a href="taxes.php" class="nav-sub-link <?= $current === 'taxes.php' ? 'active' : '' ?>">Impuestos</a>
-                    <a href="product_settings.php" class="nav-sub-link <?= $current === 'product_settings.php' ? 'active' : '' ?>">Producto</a>
-                    <a href="email_settings.php" class="nav-sub-link <?= $current === 'email_settings.php' ? 'active' : '' ?>">Correo Electrónico</a>
-                    <a href="email_templates.php" class="nav-sub-link <?= $current === 'email_templates.php' ? 'active' : '' ?>">Plantillas & Recordatorios</a>
-                    <a href="templates.php" class="nav-sub-link <?= $isActive(['templates.php']) ?>">Diseño de Factura</a>
-                    <a href="client_portal.php" class="nav-sub-link <?= $isActive(['client_portal.php']) ?>">Portal de Cliente</a>
-                    <a href="tools.php" class="nav-sub-link <?= $isActive(['tools.php']) ?>">Copia / Importar / Exportar</a>
-                    <a href="tools.php?action=sync" class="nav-sub-link">Sincronizar BD</a>
-                    <a href="tools.php?action=log" class="nav-sub-link">Registros del Sistema</a>
-                </div>
+                <a href="company.php" class="nav-link <?= $isActive(['company.php', 'settings.php', 'localization.php', 'taxes.php', 'product_settings.php', 'email_settings.php', 'email_templates.php', 'templates.php', 'client_portal.php', 'tools.php']) ?>">
+                    <i data-lucide="settings"></i> Configuración
+                </a>
 
                 <div class="nav-section nav-bottom">
                     <a href="logout.php" class="nav-link logout-link">
@@ -361,11 +792,15 @@ $user = \Core\Auth::user();
         </a>
         <a href="invoices.php?action=create" class="mobile-nav-link <?= $current === 'invoices.php' && ($_GET['action'] ?? '') === 'create' ? 'active' : '' ?>">
             <i data-lucide="shopping-cart"></i>
-            <span>Punto Venta</span>
+            <span>Nueva Factura</span>
         </a>
         <a href="invoices.php" class="mobile-nav-link <?= in_array($current, ['invoices.php', 'recurring_invoices.php', 'quotes.php', 'credit_notes.php', 'payments.php'], true) && ($_GET['action'] ?? '') !== 'create' ? 'active' : '' ?>">
             <i data-lucide="file-text"></i>
             <span>Facturas</span>
+        </a>
+        <a href="recurring_invoices.php" class="mobile-nav-link <?= $isActive(['recurring_invoices.php']) ? 'active' : '' ?>">
+            <i data-lucide="repeat"></i>
+            <span>Recurrentes</span>
         </a>
         <a href="products.php" class="mobile-nav-link <?= $isActive(['products.php']) ? 'active' : '' ?>">
             <i data-lucide="package"></i>

@@ -1,9 +1,17 @@
 <div class="glass-card">
-    <div class="flex-between" style="margin-bottom: 30px;">
-        <h3 class="section-heading" style="margin: 0;">Historial de Pagos</h3>
-        <a href="invoices.php" class="btn-primary link-button">
-            <i data-lucide="arrow-left"></i> Volver a Facturas
-        </a>
+    <div class="flex-between" style="margin-bottom: 24px; gap: 16px; flex-wrap: wrap;">
+        <div>
+            <h3 class="section-heading" style="margin: 0;">Historial de Pagos</h3>
+            <p style="margin: 6px 0 0; color: var(--text-muted);">Registra y visualiza todos los pagos recibidos.</p>
+        </div>
+        <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+            <a href="invoices.php" class="btn-secondary" style="white-space: nowrap;">
+                <i data-lucide="arrow-left"></i> Volver a Facturas
+            </a>
+            <a href="tools.php?action=export" class="btn-secondary" style="white-space: nowrap;">
+                <i data-lucide="download"></i> Exportar
+            </a>
+        </div>
     </div>
 
     <?php if(empty($payments)): ?>

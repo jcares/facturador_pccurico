@@ -41,6 +41,25 @@
     </div>
 </div>
 
+<div class="summary-grid">
+    <div class="summary-card">
+        <div class="summary-title">Facturas recurrentes activas</div>
+        <div class="summary-value"><?= number_format($stats['active_recurrences'] ?? 0, 0, ',', '.') ?></div>
+        <div class="summary-small">Ciclos de facturación programados</div>
+        <div class="progress-bar"><span style="width: <?= min(100, max(0, (int)($stats['active_recurrences'] ?? 0) * 2)) ?>%"></span></div>
+    </div>
+    <div class="summary-card">
+        <div class="summary-title">Próxima emisión</div>
+        <div class="summary-value"><?= !empty($stats['next_recurrence_date']) ? date('d/m/Y', strtotime($stats['next_recurrence_date'])) : 'Pendiente' ?></div>
+        <div class="summary-small">Siguiente documento recurrente</div>
+    </div>
+    <div class="summary-card">
+        <div class="summary-title">Exportaciones recientes</div>
+        <div class="summary-value"><?= isset($stats['exports_last_30']) ? number_format($stats['exports_last_30'], 0, ',', '.') : 'N/A' ?></div>
+        <div class="summary-small">Últimos 30 días</div>
+    </div>
+</div>
+
 <div class="main-grid" style="display: grid; grid-template-columns: 2fr 1fr; gap: 24px; margin-bottom: 24px;">
     <!-- Sales Chart -->
     <div class="glass-card">
@@ -65,6 +84,34 @@
     </div>
 </div>
 
+<div class="glass-card">
+    <div class="flex-between" style="margin-bottom: 20px; gap: 12px;">
+        <div>
+            <h3 class="section-heading" style="margin: 0;">Acciones rápidas</h3>
+            <p style="margin: 6px 0 0; color: var(--text-muted);">Accede a las tareas clave desde el dashboard.</p>
+        </div>
+        <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+            <a href="invoices.php?action=create" class="btn-primary">Nueva factura</a>
+            <a href="recurring_invoices.php" class="btn-secondary">Recurrentes</a>
+            <a href="tools.php?action=export" class="btn-secondary">Exportar</a>
+        </div>
+    </div>
+    <div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px;">
+        <div style="background: rgba(15, 23, 42, 0.85); border-radius: 18px; padding: 18px;">
+            <div style="font-size: 0.9rem; color: var(--text-muted);">Tasa de conversión</div>
+            <div style="font-size: 1.5rem; font-weight: 800; margin-top: 10px;"><?= isset($stats['conversion_rate']) ? number_format($stats['conversion_rate'], 1, ',', '.') . '%' : 'N/A' ?></div>
+        </div>
+        <div style="background: rgba(15, 23, 42, 0.85); border-radius: 18px; padding: 18px;">
+            <div style="font-size: 0.9rem; color: var(--text-muted);">Ticket promedio</div>
+            <div style="font-size: 1.5rem; font-weight: 800; margin-top: 10px;"><?= isset($stats['average_ticket']) ? '$' . number_format($stats['average_ticket'], 0, ',', '.') : 'N/A' ?></div>
+        </div>
+        <div style="background: rgba(15, 23, 42, 0.85); border-radius: 18px; padding: 18px;">
+            <div style="font-size: 0.9rem; color: var(--text-muted);">Clientes con actividad</div>
+            <div style="font-size: 1.5rem; font-weight: 800; margin-top: 10px;"><?= number_format($stats['active_clients'] ?? ($stats['total_clients'] ?? 0), 0, ',', '.') ?></div>
+        </div>
+    </div>
+</div>
+
 <script src="assets/js/chart.min.js"></script>
 <script>
 document.addEventListener('DOMContentLoaded', function() {
@@ -75,8 +122,8 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Sales Chart
     const salesCtx = document.getElementById('salesChart').getContext('2d');
-    const salesLabels = <?= $charts['sales']['labels'] ?>;
-    const salesData = <?= $charts['sales']['data'] ?>;
+    const salesLabels = <?= json_encode($charts['sales']['labels'] ?? []) ?>;
+    const salesData = <?= json_encode($charts['sales']['data'] ?? []) ?>;
 
     new Chart(salesCtx, {
         type: 'line',
@@ -147,9 +194,9 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Status Chart
     const statusCtx = document.getElementById('statusChart').getContext('2d');
-    const statusLabels = <?= $charts['status']['labels'] ?>;
-    const statusData = <?= $charts['status']['data'] ?>;
-    const statusColors = <?= $charts['status']['colors'] ?>;
+    const statusLabels = <?= json_encode($charts['status']['labels'] ?? []) ?>;
+    const statusData = <?= json_encode($charts['status']['data'] ?? []) ?>;
+    const statusColors = <?= json_encode($charts['status']['colors'] ?? ['#22d3ee', '#7c3aed', '#38bdf8']) ?>;
 
     new Chart(statusCtx, {
         type: 'doughnut',

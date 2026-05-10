@@ -106,6 +106,13 @@ Construir un facturador/POS inspirado en Invoice Ninja: clientes, productos, cat
 - Se mejoraron los textos de ayuda en formularios de configuración, agregando explicaciones detalladas y placeholders para guiar al usuario, elevando el nivel profesional del sistema.
 - Se unificó el menú móvil con el desktop: ahora en móvil se muestra el mismo sidebar lateral con toggle hamburguesa, eliminando la barra inferior limitada y asegurando contenido igual en ambas versiones; se agregó overlay para mejor UX.
 - Se restauró la barra de navegación inferior en móvil para optimizar el uso del ancho completo del teléfono y no perder espacio, actualizando los enlaces para mayor coherencia con el menú desktop.
+- Se eliminaron referencias a "POS" del sistema: "POS Facturador" → "Facturador PCCurico", "Punto Venta" → "Nueva Factura", y "Documento generado por Facturador PCcurico" → "Documento generado por PCCurico".
+- Se normalizó la alineación del menú lateral: se cambió `justify-content: space-between` a `justify-content: flex-start` en elementos del menú para alineación consistente de iconos y textos a la izquierda.
+- Despliegue a `Y:\` realizado con backup en `C:\tmp\facturador-prod-backup-20260510-070116`.
+- Se mejoró la sección de Configuración de Pagos en `settings.php?section=payments`: interfaz moderna con iconos, descripciones detalladas, explicación de Ambiente (Integración/Producción), ayuda contextual para Código de Comercio y API Key, y mantenimiento del Botón de Pago Webpay con texto personalizable e imagen subible.
+- Se agregó campo "Formato de Orden de Compra" en Configuración de Pagos: permite personalizar el formato de la orden de compra en Transbank usando componentes `{invoiceId}`, `{random}` y `{random,length=N}`. Vista previa en tiempo real. Máximo 26 caracteres alfanuméricos, guiones, guiones bajos o dos puntos.
+- Reorganizado menú de Configuración: eliminados items placeholder sin funcionalidad (tareas, gastos, workflow, account, pro, custom-fields, generated-numbers, electronic-invoicing, bank-accounts, group-settings, payment-links, schedules, users). Mantenidos solo items con href o que abren formulario settings.php.
+- Formato de orden de compra implementado: el campo `buy_order_format` se guarda automáticamente al usar Configuración de Pagos. Usar Herramientas → Sincronizar Esquema BD si es necesario crear el setting en BD.
 
 ## Pendientes Recomendados
 

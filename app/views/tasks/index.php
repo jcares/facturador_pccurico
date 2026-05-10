@@ -1,10 +1,22 @@
+<?php
+$tasks = $tasks ?? [];
+?>
 <div style="max-width: 1200px; margin: 0 auto;">
-    <div class="flex-between" style="margin-bottom: 24px;">
-        <div>
-            <h2 style="font-weight: 800; margin: 0;">Gestión de Tareas</h2>
-            <p style="color: var(--text-muted); margin: 6px 0 0;">Organiza y sigue tus tareas pendientes.</p>
+    <div class="glass-card" style="padding: 24px; margin-bottom: 24px;">
+        <div class="flex-between" style="gap: 16px; flex-wrap: wrap;">
+            <div>
+                <h2 style="font-weight: 800; margin: 0; font-size: 1.3rem; color: #f8fafc;">Gestión de Tareas</h2>
+                <p style="color: var(--text-muted); margin: 6px 0 0;">Organiza y sigue tus tareas pendientes.</p>
+            </div>
+            <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+                <a href="tasks.php?action=create" class="btn-primary" style="white-space: nowrap;">
+                    <i data-lucide="plus"></i> Nueva Tarea
+                </a>
+                <a href="tools.php?action=export" class="btn-secondary" style="white-space: nowrap;">
+                    <i data-lucide="download"></i> Exportar
+                </a>
+            </div>
         </div>
-        <a href="tasks.php?action=create" class="btn-primary">Nueva Tarea</a>
     </div>
 
     <?php if(isset($_GET['success'])): ?>

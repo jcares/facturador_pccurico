@@ -1,4 +1,21 @@
+<?php
+$totalBilled = $totalBilled ?? 0;
+$totalPaid = $totalPaid ?? 0;
+$totalPending = $totalPending ?? 0;
+$receivables = $receivables ?? [];
+?>
 <div style="max-width: 1000px; margin: 0 auto;">
+    <div class="glass-card" style="padding: 24px; margin-bottom: 24px;">
+        <div class="flex-between" style="gap: 16px; flex-wrap: wrap; margin-bottom: 16px;">
+            <div>
+                <h2 style="font-weight: 800; margin: 0; font-size: 1.3rem; color: #f8fafc;">Reportes Financieros</h2>
+                <p style="color: var(--text-muted); margin: 6px 0 0;">Visualiza análisis e informes de tu negocio.</p>
+            </div>
+            <a href="tools.php?action=export" class="btn-secondary" style="white-space: nowrap;">
+                <i data-lucide="download"></i> Exportar Reportes
+            </a>
+        </div>
+    </div>
     <div class="stat-grid">
         <div class="stat-card" style="border-left: 4px solid var(--primary);">
             <div class="stat-label">Total Facturado (Histórico)</div>

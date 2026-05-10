@@ -1,14 +1,61 @@
-<div class="main-grid" style="display: flex; gap: 30px;">
-    <div class="glass-card" style="flex: 2;">
-        <h3 style="margin-bottom: 20px; font-weight: 800; display: flex; align-items: center; gap: 10px;">
+<?php $showForm = !empty($editing); $categories = $categories ?? []; ?>
+
+<style>
+    @media (max-width: 900px) {
+        .table-container {
+            display: none !important;
+        }
+
+        .mobile-cards {
+            display: block !important;
+        }
+
+        .glass-card {
+            padding: 20px;
+        }
+
+        .mobile-card {
+            margin-bottom: 16px;
+        }
+
+        .mobile-card-actions {
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .mobile-card-actions a,
+        .mobile-card-actions form {
+            width: 100%;
+        }
+    }
+
+    @media (min-width: 901px) {
+        .mobile-cards {
+            display: none !important;
+        }
+    }
+</style>
+
+<div class="glass-card">
+    <div style="display: flex; justify-content: space-between; gap: 16px; align-items: center; flex-wrap: wrap; margin-bottom: 24px;">
+        <h3 style="margin: 0; font-weight: 800; display: flex; align-items: center; gap: 10px;">
             <i data-lucide="package"></i> Inventario de Productos
         </h3>
-        <?php if(empty($products)): ?>
-            <div style="text-align: center; padding: 40px; color: var(--text-muted);">
-                <i data-lucide="inbox" style="width: 40px; height: 40px; margin-bottom: 10px; opacity: 0.3;"></i>
-                <p>No hay productos registrados aun.</p>
-            </div>
-        <?php else: ?>
+        <div style="display: flex; gap: 10px; flex-wrap: wrap; align-items: center;">
+            <?php if(!$showForm): ?>
+                <button id="toggle-product-form" class="btn-primary" style="white-space: nowrap;">+ Nuevo Producto</button>
+            <?php endif; ?>
+            <a href="tools.php?action=export" class="btn-secondary" style="text-decoration: none; white-space: nowrap;">Exportar</a>
+            <a href="tools.php" class="btn-secondary" style="text-decoration: none; white-space: nowrap;">Importar</a>
+        </div>
+    </div>
+
+    <?php if(empty($products)): ?>
+        <div style="text-align: center; padding: 40px; color: var(--text-muted);">
+            <i data-lucide="inbox" style="width: 40px; height: 40px; margin-bottom: 10px; opacity: 0.3;"></i>
+            <p>No hay productos registrados aun.</p>
+        </div>
+    <?php else: ?>
         <div class="table-container">
             <table style="width: 100%; text-align: left; border-collapse: collapse;">
                 <thead>
@@ -123,82 +170,98 @@
                 </div>
             <?php endforeach; ?>
         </div>
-        <?php endif; ?>
-    </div>
+    <?php endif; ?>
 
-    <div class="glass-card" style="flex: 1; align-self: flex-start; padding: 25px;">
-        <h3 style="margin-bottom: 25px; font-weight: 800; display: flex; align-items: center; gap: 10px;">
-            <i data-lucide="<?= !empty($editing) ? 'pencil' : 'plus-circle' ?>" style="color: var(--primary);"></i>
-            <?= !empty($editing) ? 'Editar Producto' : 'Nuevo Producto' ?>
-        </h3>
-        <form action="products.php?action=<?= !empty($editing) ? 'update' : 'store' ?>" method="POST">
-            <?= \Core\Security::csrfField() ?>
-            <?php if(!empty($editing)): ?>
-                <input type="hidden" name="id" value="<?= (int)$editing['id'] ?>">
-            <?php endif; ?>
-            <div class="form-group">
-                <label>Nombre del Producto *</label>
-                <input type="text" name="name" required placeholder="Ej: Servicio de Mantenimiento" value="<?= htmlspecialchars($editing['name'] ?? '') ?>">
-            </div>
-            <div class="form-group">
-                <label>SKU / Codigo Interno</label>
-                <input type="text" name="sku" placeholder="Se genera automaticamente si queda vacio" value="<?= htmlspecialchars($editing['sku'] ?? '') ?>">
-            </div>
+    <div id="product-form-container" style="display: <?= $showForm ? 'block' : 'none' ?>; margin-top: 24px;">
+        <div class="glass-card" style="padding: 25px;">
+            <h3 style="margin-bottom: 25px; font-weight: 800; display: flex; align-items: center; gap: 10px;">
+                <i data-lucide="<?= !empty($editing) ? 'pencil' : 'plus-circle' ?>" style="color: var(--primary);"></i>
+                <?= !empty($editing) ? 'Editar Producto' : 'Nuevo Producto' ?>
+            </h3>
+            <form action="products.php?action=<?= !empty($editing) ? 'update' : 'store' ?>" method="POST">
+                <?= \Core\Security::csrfField() ?>
+                <?php if(!empty($editing)): ?>
+                    <input type="hidden" name="id" value="<?= (int)$editing['id'] ?>">
+                <?php endif; ?>
+                <div class="form-group">
+                    <label>Nombre del Producto *</label>
+                    <input type="text" name="name" required placeholder="Ej: Servicio de Mantenimiento" value="<?= htmlspecialchars($editing['name'] ?? '') ?>">
+                </div>
+                <div class="form-group">
+                    <label>SKU / Codigo Interno</label>
+                    <input type="text" name="sku" placeholder="Se genera automaticamente si queda vacio" value="<?= htmlspecialchars($editing['sku'] ?? '') ?>">
+                </div>
 
-            <div class="form-row">
-                <div class="form-group">
-                    <label>Categoria hija</label>
-                    <select name="category_id">
-                        <option value="">Sin Categoria</option>
-                        <?php foreach($categories as $cat): ?>
-                            <?php $displayCat = !empty($cat['parent_name']) ? htmlspecialchars($cat['parent_name'] . ' / ' . $cat['name']) : htmlspecialchars($cat['name']); ?>
-                            <option value="<?= (int)$cat['id'] ?>" <?= !empty($editing) && (int)($editing['category_id'] ?? 0) === (int)$cat['id'] ? 'selected' : '' ?>><?= $displayCat ?></option>
-                        <?php endforeach; ?>
-                    </select>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Categoria hija</label>
+                        <select name="category_id">
+                            <option value="">Sin Categoria</option>
+                            <?php foreach($categories as $cat): ?>
+                                <?php $displayCat = !empty($cat['parent_name']) ? htmlspecialchars($cat['parent_name'] . ' / ' . $cat['name']) : htmlspecialchars($cat['name']); ?>
+                                <option value="<?= (int)$cat['id'] ?>" <?= !empty($editing) && (int)($editing['category_id'] ?? 0) === (int)$cat['id'] ? 'selected' : '' ?>><?= $displayCat ?></option>
+                            <?php endforeach; ?>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Moneda</label>
+                        <?php $selectedCurrency = $editing['currency'] ?? 'CLP'; ?>
+                        <select name="currency">
+                            <option value="CLP" <?= $selectedCurrency === 'CLP' ? 'selected' : '' ?>>CLP ($)</option>
+                            <option value="USD" <?= $selectedCurrency === 'USD' ? 'selected' : '' ?>>USD (US$)</option>
+                            <option value="UF" <?= $selectedCurrency === 'UF' ? 'selected' : '' ?>>UF (Unidad Fom.)</option>
+                        </select>
+                    </div>
                 </div>
-                <div class="form-group">
-                    <label>Moneda</label>
-                    <?php $selectedCurrency = $editing['currency'] ?? 'CLP'; ?>
-                    <select name="currency">
-                        <option value="CLP" <?= $selectedCurrency === 'CLP' ? 'selected' : '' ?>>CLP ($)</option>
-                        <option value="USD" <?= $selectedCurrency === 'USD' ? 'selected' : '' ?>>USD (US$)</option>
-                        <option value="UF" <?= $selectedCurrency === 'UF' ? 'selected' : '' ?>>UF (Unidad Fom.)</option>
-                    </select>
-                </div>
-            </div>
 
-            <div class="form-row">
-                <div class="form-group">
-                    <label>Precio Neto *</label>
-                    <input type="number" step="0.01" name="price" required placeholder="0.00" value="<?= htmlspecialchars($editing['price'] ?? '') ?>">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Precio Neto *</label>
+                        <input type="number" step="0.01" name="price" required placeholder="0.00" value="<?= htmlspecialchars($editing['price'] ?? '') ?>">
+                    </div>
+                    <div class="form-group">
+                        <label>Precio por</label>
+                        <?php $selectedUnit = $editing['price_unit'] ?? 'unit'; ?>
+                        <select name="price_unit">
+                            <option value="unit" <?= $selectedUnit === 'unit' ? 'selected' : '' ?>>Unidad</option>
+                            <option value="meter" <?= $selectedUnit === 'meter' ? 'selected' : '' ?>>Metro</option>
+                        </select>
+                    </div>
                 </div>
-                <div class="form-group">
-                    <label>Precio por</label>
-                    <?php $selectedUnit = $editing['price_unit'] ?? 'unit'; ?>
-                    <select name="price_unit">
-                        <option value="unit" <?= $selectedUnit === 'unit' ? 'selected' : '' ?>>Unidad</option>
-                        <option value="meter" <?= $selectedUnit === 'meter' ? 'selected' : '' ?>>Metro</option>
-                    </select>
-                </div>
-            </div>
 
-            <div class="form-row">
-                <div class="form-group">
-                    <label>Stock</label>
-                    <input type="number" step="0.01" name="stock" value="<?= htmlspecialchars($editing['stock'] ?? '0') ?>">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Stock</label>
+                        <input type="number" step="0.01" name="stock" value="<?= htmlspecialchars($editing['stock'] ?? '0') ?>">
+                    </div>
+                    <div class="form-group">
+                        <label>Tasa IVA</label>
+                        <input type="number" step="0.01" name="tax_rate" value="<?= htmlspecialchars($editing['tax_rate'] ?? '0.19') ?>" readonly style="background: rgba(0,0,0,0.2); opacity: 0.7;">
+                    </div>
                 </div>
-                <div class="form-group">
-                    <label>Tasa IVA</label>
-                    <input type="number" step="0.01" name="tax_rate" value="<?= htmlspecialchars($editing['tax_rate'] ?? '0.19') ?>" readonly style="background: rgba(0,0,0,0.2); opacity: 0.7;">
-                </div>
-            </div>
 
-            <button type="submit" class="btn-primary" style="margin-top: 15px; width: 100%;">
-                <i data-lucide="save" style="width: 18px;"></i> <?= !empty($editing) ? 'Actualizar Producto' : 'Guardar Producto' ?>
-            </button>
-            <?php if(!empty($editing)): ?>
-                <a href="products.php" class="btn-primary" style="display: block; margin-top: 10px; text-align: center; background: rgba(255,255,255,0.1); text-decoration: none;">Cancelar</a>
-            <?php endif; ?>
-        </form>
+                <button type="submit" class="btn-primary" style="margin-top: 15px; width: 100%;">
+                    <i data-lucide="save" style="width: 18px;"></i> <?= !empty($editing) ? 'Actualizar Producto' : 'Guardar Producto' ?>
+                </button>
+                <?php if(!empty($editing)): ?>
+                    <a href="products.php" class="btn-primary" style="display: block; margin-top: 10px; text-align: center; background: rgba(255,255,255,0.1); text-decoration: none;">Cancelar</a>
+                <?php endif; ?>
+            </form>
+        </div>
     </div>
 </div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        var toggleButton = document.getElementById('toggle-product-form');
+        var formContainer = document.getElementById('product-form-container');
+
+        if (toggleButton && formContainer) {
+            toggleButton.addEventListener('click', function () {
+                var isVisible = formContainer.style.display === 'block';
+                formContainer.style.display = isVisible ? 'none' : 'block';
+                toggleButton.textContent = isVisible ? '+ Nuevo Producto' : 'Cerrar formulario';
+            });
+        }
+    });
+</script>

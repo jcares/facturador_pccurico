@@ -40,7 +40,7 @@ if ($balance <= 0) {
 
 try {
     $tbk = new TransbankService();
-    $buyOrder = "INV" . $invoice['id'] . time();
+    $buyOrder = $tbk->generateBuyOrder($invoice['id']);
     $sessionId = "SESS" . uniqid();
     $returnUrl = "https://" . $_SERVER['HTTP_HOST'] . "/webpay_return.php?token=" . urlencode($token);
     $currency = strtoupper($invoice['currency'] ?? 'CLP');
