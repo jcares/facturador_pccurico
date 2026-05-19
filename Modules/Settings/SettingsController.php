@@ -4,11 +4,12 @@ namespace Modules\Settings;
 use Core\Controller;
 use Core\Database;
 use Core\Security;
+use Core\View;
 use Core\Logger;
 
 class SettingsController extends Controller
 {
-private $allowedSettings = [
+    private $allowedSettings = [
          'biz_name', 'biz_rut', 'biz_address', 'biz_phone', 'biz_email',
          'biz_website', 'biz_logo', 'invoice_prefix', 'currency_symbol',
          'biz_giro', 'webpay_env', 'webpay_cc', 'webpay_key',
@@ -27,7 +28,8 @@ private $allowedSettings = [
                 'company' => ['label' => 'Detalles de la Empresa', 'icon' => 'building-2', 'href' => 'company.php'],
                 'user' => ['label' => 'Detalles de Usuario', 'icon' => 'user-cog'],
                 'localization' => ['label' => 'Localizacion', 'icon' => 'globe-2', 'href' => 'localization.php'],
-                'payments' => ['label' => 'Configuración de Pagos', 'icon' => 'credit-card'],
+                'payments' => ['label' => 'Configuracion de Pagos', 'icon' => 'credit-card'],
+                'transbank' => ['label' => 'Transbank', 'icon' => 'landmark', 'href' => 'settings.php?section=transbank'],
                 'taxes' => ['label' => 'Configuracion de Impuestos', 'icon' => 'percent', 'href' => 'taxes.php'],
                 'product' => ['label' => 'Configuracion del Producto', 'icon' => 'package', 'href' => 'product_settings.php'],
                 'email' => ['label' => 'Configuracion del Correo', 'icon' => 'mail', 'href' => 'email_settings.php'],
@@ -45,9 +47,75 @@ private $allowedSettings = [
         ],
     ];
 
+    private function getSettingSections(): array
+    {
+        return [
+            [
+                'key' => 'company', 'label' => 'Detalles de la Empresa',
+                'icon' => 'building-2', 'color' => 'var(--primary)',
+                'href' => 'settings.php?section=company',
+            ],
+            [
+                'key' => 'localization', 'label' => 'Localización',
+                'icon' => 'globe-2', 'color' => '#f59e0b',
+                'href' => 'settings.php?section=localization',
+            ],
+            [
+                'key' => 'transbank', 'label' => 'Pagos (Webpay)',
+                'icon' => 'credit-card', 'color' => '#e0245e',
+                'href' => 'settings.php?section=transbank',
+            ],
+            [
+                'key' => 'taxes', 'label' => 'Impuestos',
+                'icon' => 'percent', 'color' => '#10b981',
+                'href' => 'settings.php?section=taxes',
+            ],
+            [
+                'key' => 'product', 'label' => 'Configuracion del Producto',
+                'icon' => 'package', 'color' => '#3b82f6',
+                'href' => 'settings.php?section=product',
+            ],
+            [
+                'key' => 'email', 'label' => 'Configuración de Correo',
+                'icon' => 'mail', 'color' => '#22d3ee',
+                'href' => 'settings.php?section=email',
+            ],
+            [
+                'key' => 'email-templates', 'label' => 'Plantillas & Recordatorios',
+                'icon' => 'send', 'color' => '#a78bfa',
+                'href' => 'settings.php?section=email-templates',
+            ],
+            [
+                'key' => 'invoice-design', 'label' => 'Diseño de Factura',
+                'icon' => 'palette', 'color' => '#ec4899',
+                'href' => 'templates.php',
+            ],
+            [
+                'key' => 'system-logs', 'label' => 'Registros del Sistema',
+                'icon' => 'scroll', 'color' => '#ef4444',
+                'href' => 'tools.php?action=log',
+            ],
+            [
+                'key' => 'tools', 'label' => 'Herramientas',
+                'icon' => 'tool', 'color' => '#14b8a6',
+                'href' => 'tools.php',
+            ],
+            [
+                'key' => 'client-portal', 'label' => 'Portal de Cliente',
+                'icon' => 'monitor', 'color' => '#f97316',
+                'href' => 'client_portal.php',
+            ],
+        ];
+    }
+
     public function index()
     {
         $section = Security::cleanString($_GET['section'] ?? 'company', 60);
+
+        if ($section === '' || $section === 'settings') {
+            $section = 'company';
+        }
+
         $db = Database::getInstance();
         $stmt = $db->query("SELECT * FROM settings");
         $settingsRaw = $stmt->fetchAll();
@@ -56,13 +124,46 @@ private $allowedSettings = [
             $settings[$s['key']] = $s['value'];
         }
 
-        $this->view('settings/index', [
+        View::renderSettings('settings/index', [
             'title' => $this->sectionLabel($section),
             'settings' => $settings,
             'section' => $section,
             'sections' => $this->sections,
             'sectionMeta' => $this->sectionMeta($section)
         ]);
+    }
+
+    public function test_email()
+    {
+        $testTo = filter_var($_GET['email'] ?? '', FILTER_VALIDATE_EMAIL);
+        if (!$testTo) {
+            echo json_encode(['success' => false, 'message' => 'Email invalido.']);
+            return;
+        }
+
+        try {
+            $settings = \Core\Config::getAll();
+            $subject = "Prueba de configuracion - " . ($settings['biz_name'] ?? 'Facturador');
+            $body = "<h2>Prueba de Correo Exitosa</h2><p>Tu configuracion SMTP funciona correctamente.</p>";
+            
+            $result = \Core\Mailer::sendReminder($testTo, $subject, $body);
+            echo json_encode(['success' => $result, 'message' => $result ? 'Correo enviado con exito.' : 'Error al enviar correo.']);
+        } catch (\Exception $e) {
+            echo json_encode(['success' => false, 'message' => $e->getMessage()]);
+        }
+    }
+
+    public function test_transbank()
+    {
+        header('Content-Type: application/json');
+        try {
+            $settings = \Core\Config::getAll();
+            $tbk = new \Core\TransbankService();
+            $status = $tbk->checkHealth();
+            echo json_encode(['success' => true, 'message' => 'Conexion con Transbank exitosa.']);
+        } catch (\Exception $e) {
+            echo json_encode(['success' => false, 'message' => 'Error: ' . $e->getMessage()]);
+        }
     }
 
     public function update()
@@ -172,7 +273,6 @@ private $allowedSettings = [
 
         if (move_uploaded_file($file['tmp_name'], $destPath)) {
             chmod($destPath, 0644);
-            // Save logo filename directly to database (the main loop skips biz_logo)
             $stmt = $db->prepare("INSERT INTO settings (`key`, `value`) VALUES ('biz_logo', ?) ON DUPLICATE KEY UPDATE `value` = VALUES(`value`)");
             $stmt->execute([$fileName]);
         } else {
@@ -180,17 +280,13 @@ private $allowedSettings = [
         }
     }
 
-    /**
-     * Generic image upload handler for settings (e.g., webpay_button_image).
-     */
     private function handleImageUpload($db, $settingKey, $file)
     {
         $allowedMimeTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp', 'image/svg+xml'];
         $allowedExtensions = ['jpg', 'jpeg', 'png', 'gif', 'webp', 'svg'];
 
-        $finfo = finfo_open(FILEINFO_MIME_TYPE);
-        $mimeType = finfo_file($finfo, $file['tmp_name']);
-        finfo_close($finfo);
+        $finfo = new \finfo(FILEINFO_MIME_TYPE);
+        $mimeType = $finfo->file($file['tmp_name']);
 
         if (!in_array($mimeType, $allowedMimeTypes, true)) {
             throw new \Exception('Tipo de archivo no permitido.');

@@ -1,25 +1,25 @@
 <div class="glass-card">
-    <div class="flex-between" style="margin-bottom: 24px; gap: 16px; flex-wrap: wrap;">
+    <div class="flex-between mb-24 gap-16 flex-wrap">
         <div>
-            <h3 class="section-heading" style="margin: 0;">Historial de Documentos</h3>
-            <p style="margin: 6px 0 0; color: var(--text-muted);">Gestiona facturas, boletas, registros e historial completo de operaciones.</p>
+            <h3 class="section-heading m-0">Historial de Documentos</h3>
+            <p class="section-desc">Gestiona facturas, boletas, registros e historial completo de operaciones.</p>
         </div>
-        <div style="display: flex; gap: 10px; flex-wrap: wrap;">
-            <a href="invoices.php?action=create" class="btn-primary" style="white-space: nowrap;">
+        <div class="action-buttons">
+            <a href="invoices.php?action=create" class="btn-primary whitespace-nowrap">
                 <i data-lucide="plus"></i> Nueva Venta
             </a>
-            <a href="tools.php?action=export" class="btn-secondary" style="white-space: nowrap;">
+            <a href="tools.php?action=export" class="btn-secondary whitespace-nowrap">
                 <i data-lucide="download"></i> Exportar
             </a>
-            <a href="tools.php" class="btn-secondary" style="white-space: nowrap;">
+            <a href="tools.php" class="btn-secondary whitespace-nowrap">
                 <i data-lucide="upload"></i> Importar
             </a>
         </div>
     </div>
 
     <?php if(empty($invoices)): ?>
-        <div class="text-center" style="padding: 40px; color: var(--text-muted);">
-            <i data-lucide="file-x" style="width: 48px; height: 48px; margin-bottom: 16px; opacity: 0.5;"></i>
+        <div class="text-center text-muted p-40">
+            <i data-lucide="file-x" class="icon-lg mb-16 opacity-50"></i>
             <p>No hay facturas ni boletas registradas.</p>
         </div>
     <?php else: ?>
@@ -32,46 +32,46 @@
                         <th>Fecha</th>
                         <th>Total</th>
                         <th>Estado</th>
-                        <th style="text-align: right;">Acciones</th>
+                        <th class="text-right">Acciones</th>
                     </tr>
                 </thead>
                 <tbody>
                     <?php foreach($invoices as $i): ?>
                         <tr>
-                            <td class="highlight" style="color: var(--primary);">
-                                <a href="invoices.php?id=<?= (int)$i['id'] ?>" style="color: inherit; text-decoration: none;">
+                            <td class="highlight text-primary">
+                                <a href="invoices.php?id=<?= (int)$i['id'] ?>" class="text-inherit no-underline">
                                     <?= htmlspecialchars($i['number']) ?>
                                 </a>
                             </td>
                             <td><?= htmlspecialchars($i['client_name'] ?? 'Cliente Generico') ?></td>
-                            <td style="color: var(--text-muted);"><?= date('d/m/Y H:i', strtotime($i['created_at'])) ?></td>
+                            <td class="text-muted"><?= date('d/m/Y H:i', strtotime($i['created_at'])) ?></td>
                             <?php $currency = $i['currency'] ?? 'CLP'; ?>
-                            <td style="font-weight: 600;">
+                            <td class="font-600">
                                 <?= $currency === 'CLP' ? '$' : htmlspecialchars($currency) . ' ' ?><?= number_format((float)$i['total'], $currency === 'CLP' ? 0 : 2, ',', '.') ?>
                             </td>
                             <td>
-                                <span class="status-badge status-sent">
+                                <span class="status-badge status-<?= htmlspecialchars($i['status'] ?? 'sent') ?>">
                                     <?= htmlspecialchars($i['status']) ?>
                                 </span>
                             </td>
-                            <td style="text-align: right; white-space: nowrap;">
+                            <td class="text-right whitespace-nowrap">
                                 <?php if($i['status'] !== 'canceled'): ?>
-                                    <a href="payments.php?invoice_id=<?= (int)$i['id'] ?>" style="color: var(--primary); margin-right: 15px; text-decoration: none;" title="Registrar Pago">
+                                    <a href="payments.php?invoice_id=<?= (int)$i['id'] ?>" class="text-primary no-underline mr-15" title="Registrar Pago">
                                         <i data-lucide="dollar-sign"></i>
                                     </a>
                                 <?php endif; ?>
-                                <a href="invoices.php?action=print&id=<?= (int)$i['id'] ?>&format=a4" target="_blank" style="color: var(--text-main); margin-right: 10px; text-decoration: none;" title="Imprimir A4">
+                                <a href="invoices.php?action=print&id=<?= (int)$i['id'] ?>&format=a4" target="_blank" class="text-main no-underline mr-10" title="Imprimir A4">
                                     <i data-lucide="printer"></i>
                                 </a>
-                                <a href="invoices.php?action=print&id=<?= (int)$i['id'] ?>&format=ticket_80mm" target="_blank" style="color: var(--text-muted); margin-right: 10px; text-decoration: none;" title="Ticket 80mm">
+                                <a href="invoices.php?action=print&id=<?= (int)$i['id'] ?>&format=ticket_80mm" target="_blank" class="text-muted no-underline mr-10" title="Ticket 80mm">
                                     <i data-lucide="receipt"></i>
                                 </a>
                                 <?php if($i['status'] !== 'paid' && $i['status'] !== 'canceled'): ?>
-                                    <form action="invoices.php?action=cancel" method="POST" style="display: inline;" onsubmit="return confirm('Anular este documento y registrar nota de credito generica?');">
+                                    <form action="invoices.php?action=cancel" method="POST" class="d-inline" onsubmit="return confirm('Anular este documento y registrar nota de credito generica?');">
                                         <?= \Core\Security::csrfField() ?>
                                         <input type="hidden" name="id" value="<?= (int)$i['id'] ?>">
                                         <input type="hidden" name="reason" value="Anulacion manual desde panel">
-                                        <button type="submit" style="background: none; border: none; color: #ef4444; cursor: pointer; padding: 0;" title="Anular">
+                                        <button type="submit" class="btn-icon text-danger" title="Anular">
                                             <i data-lucide="ban"></i>
                                         </button>
                                     </form>
@@ -84,16 +84,16 @@
         </div>
 
         <!-- Mobile Cards View -->
-        <div class="mobile-cards" style="display: none;">
+        <div class="mobile-cards">
             <?php foreach($invoices as $i): ?>
                 <div class="mobile-card">
                     <div class="mobile-card-header">
                         <div class="mobile-card-title">
-                            <a href="invoices.php?id=<?= (int)$i['id'] ?>" style="color: inherit; text-decoration: none;">
+                            <a href="invoices.php?id=<?= (int)$i['id'] ?>" class="text-inherit no-underline">
                                 <?= htmlspecialchars($i['number']) ?>
                             </a>
                         </div>
-                        <div style="font-size: 0.8rem; color: var(--text-muted);">
+                        <div class="mobile-card-subtitle">
                             <?= date('d/m/Y H:i', strtotime($i['created_at'])) ?>
                         </div>
                     </div>
@@ -102,31 +102,31 @@
                         <?php $currency = $i['currency'] ?? 'CLP'; ?>
                         <strong>Total:</strong> <?= $currency === 'CLP' ? '$' : htmlspecialchars($currency) . ' ' ?><?= number_format((float)$i['total'], $currency === 'CLP' ? 0 : 2, ',', '.') ?><br>
                         <strong>Estado:</strong>
-                        <span class="status-badge status-sent" style="font-size: 0.7rem; padding: 2px 6px;">
+                        <span class="status-badge status-sm status-<?= htmlspecialchars($i['status'] ?? 'sent') ?>">
                             <?= htmlspecialchars($i['status']) ?>
                         </span>
                     </div>
                     <div class="mobile-card-actions">
                         <?php if($i['status'] !== 'canceled'): ?>
-                            <a href="payments.php?invoice_id=<?= (int)$i['id'] ?>" class="btn-primary" style="flex: 1; text-align: center; padding: 8px; font-size: 0.8rem;">
-                                <i data-lucide="dollar-sign" style="width: 14px;"></i> Pagar
+                            <a href="payments.php?invoice_id=<?= (int)$i['id'] ?>" class="btn-primary btn-sm flex-1">
+                                <i data-lucide="dollar-sign" class="icon-sm"></i> Pagar
                             </a>
                         <?php endif; ?>
-                        <div style="display: flex; gap: 4px; flex: 1;">
-                            <a href="invoices.php?action=print&id=<?= (int)$i['id'] ?>&format=a4" target="_blank" class="btn-secondary" style="flex: 1; text-align: center; padding: 8px; font-size: 0.7rem;">
-                                <i data-lucide="printer" style="width: 12px;"></i> A4
+                        <div class="d-flex gap-4 flex-1">
+                            <a href="invoices.php?action=print&id=<?= (int)$i['id'] ?>&format=a4" target="_blank" class="btn-secondary btn-sm flex-1">
+                                <i data-lucide="printer" class="icon-xs"></i> A4
                             </a>
-                            <a href="invoices.php?action=print&id=<?= (int)$i['id'] ?>&format=ticket_80mm" target="_blank" class="btn-secondary" style="flex: 1; text-align: center; padding: 8px; font-size: 0.7rem;">
-                                <i data-lucide="receipt" style="width: 12px;"></i> Ticket
+                            <a href="invoices.php?action=print&id=<?= (int)$i['id'] ?>&format=ticket_80mm" target="_blank" class="btn-secondary btn-sm flex-1">
+                                <i data-lucide="receipt" class="icon-xs"></i> Ticket
                             </a>
                         </div>
                         <?php if($i['status'] !== 'paid' && $i['status'] !== 'canceled'): ?>
-                            <form action="invoices.php?action=cancel" method="POST" style="flex: 1;" onsubmit="return confirm('Anular este documento y registrar nota de credito generica?');">
+                            <form action="invoices.php?action=cancel" method="POST" class="flex-1" onsubmit="return confirm('Anular este documento y registrar nota de credito generica?');">
                                 <?= \Core\Security::csrfField() ?>
                                 <input type="hidden" name="id" value="<?= (int)$i['id'] ?>">
                                 <input type="hidden" name="reason" value="Anulacion manual desde panel">
-                                <button type="submit" class="btn-secondary" style="width: 100%; background: rgba(239,68,68,0.1); color: #ef4444; border-color: rgba(239,68,68,0.3); padding: 8px; font-size: 0.8rem;">
-                                    <i data-lucide="ban" style="width: 14px;"></i> Anular
+                                <button type="submit" class="btn-secondary btn-danger w-full btn-sm">
+                                    <i data-lucide="ban" class="icon-sm"></i> Anular
                                 </button>
                             </form>
                         <?php endif; ?>
@@ -138,9 +138,9 @@
 </div>
 
 <?php if(!empty($recurringInvoices)): ?>
-    <div class="glass-card" style="margin-top: 24px;">
-        <div class="flex-between" style="margin-bottom: 20px;">
-            <h3 class="section-heading" style="margin: 0;">Facturas recurrentes</h3>
+    <div class="glass-card mt-24">
+        <div class="flex-between mb-20">
+            <h3 class="section-heading m-0">Facturas recurrentes</h3>
             <a href="invoices.php?action=create" class="btn-secondary link-button">
                 <i data-lucide="repeat"></i> Nueva recurrente
             </a>
@@ -163,13 +163,13 @@
                         <tr>
                             <td class="highlight"><?= htmlspecialchars($r['client_name'] ?? 'Cliente') ?></td>
                             <td><?= htmlspecialchars($r['frequency']) ?></td>
-                            <td style="color: var(--text-muted);">
+                            <td class="text-muted">
                                 <?= !empty($r['next_run_date']) ? date('d/m/Y', strtotime($r['next_run_date'])) : '-' ?>
                             </td>
-                            <td style="font-weight: 600;">
+                            <td class="font-600">
                                 <?= $currency === 'CLP' ? '$' : htmlspecialchars($currency) . ' ' ?><?= number_format((float)$r['total'], $currency === 'CLP' ? 0 : 2, ',', '.') ?>
                             </td>
-                            <td><span class="status-badge status-sent"><?= htmlspecialchars($r['status']) ?></span></td>
+                            <td><span class="status-badge status-<?= htmlspecialchars($r['status'] ?? 'sent') ?>"><?= htmlspecialchars($r['status']) ?></span></td>
                             <td>
                                 <?= (int)$r['cycles_generated'] ?><?= $r['remaining_cycles'] !== null ? ' / ' . (int)$r['remaining_cycles'] : ' / sin limite' ?>
                             </td>
@@ -179,13 +179,13 @@
             </table>
         </div>
 
-        <div class="mobile-cards" style="display: none;">
+        <div class="mobile-cards">
             <?php foreach($recurringInvoices as $r): ?>
                 <?php $currency = $r['currency'] ?? 'CLP'; ?>
                 <div class="mobile-card">
                     <div class="mobile-card-header">
                         <div class="mobile-card-title"><?= htmlspecialchars($r['client_name'] ?? 'Cliente') ?></div>
-                        <span class="status-badge status-sent" style="font-size: 0.7rem; padding: 2px 6px;"><?= htmlspecialchars($r['status']) ?></span>
+                        <span class="status-badge status-sm status-<?= htmlspecialchars($r['status'] ?? 'sent') ?>"><?= htmlspecialchars($r['status']) ?></span>
                     </div>
                     <div class="mobile-card-meta">
                         <strong>Frecuencia:</strong> <?= htmlspecialchars($r['frequency']) ?><br>

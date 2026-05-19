@@ -108,15 +108,4 @@ class TransbankService
     {
         return $this->request('/rswebpaytransaction/api/webpay/v1.2/transactions/' . $tokenWs, 'PUT');
     }
-
-    public function checkHealth()
-    {
-        // Simple request to check if credentials/env are working
-        // We use a dummy token to see if we get a 401 (bad credentials) or 404 (working service)
-        $response = $this->request('/rswebpaytransaction/api/webpay/v1.2/transactions/health_check', 'PUT');
-        if ($response['status'] === 401) {
-            throw new \Exception('Codigo de Comercio o API Key invalidos.');
-        }
-        return true;
-    }
 }

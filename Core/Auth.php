@@ -34,6 +34,11 @@ class Auth
         return isset($_SESSION['user_id']);
     }
 
+    public static function id(): ?int
+    {
+        return isset($_SESSION['user_id']) ? (int) $_SESSION['user_id'] : null;
+    }
+
     public static function logout()
     {
         session_destroy();

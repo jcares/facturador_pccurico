@@ -4,12 +4,22 @@
  * Installation Wizard - Full Logic
  */
 
+ini_set('session.cookie_httponly', '1');
+ini_set('session.use_strict_mode', '1');
+$installHttps = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off')
+    || (!empty($_SERVER['HTTP_X_FORWARDED_PROTO']) && $_SERVER['HTTP_X_FORWARDED_PROTO'] === 'https')
+    || (string) ($_SERVER['SERVER_PORT'] ?? '') === '443';
+if ($installHttps) {
+    ini_set('session.cookie_secure', '1');
+}
 session_start();
 header('Content-Type: text/html; charset=utf-8');
 error_reporting(E_ALL);
 ini_set('display_errors', 1);
 
 define('ROOT_PATH', dirname(__DIR__));
+
+require_once ROOT_PATH . '/Core/Database.php';
 
 // Crear directorio storage si no existe (instalación limpia)
 if (!is_dir(ROOT_PATH . '/storage')) {
@@ -51,12 +61,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             'host' => $_POST['db_host'],
             'name' => $_POST['db_name'],
             'user' => $_POST['db_user'],
-            'pass' => $_POST['db_pass']
+            'pass' => $_POST['db_pass'],
         ];
+        $dbPort = isset($_POST['db_port']) ? trim((string) $_POST['db_port']) : '';
+        if ($dbPort !== '' && ctype_digit($dbPort)) {
+            $_SESSION['db_config']['port'] = (int) $dbPort;
+        }
 
         // Probar conexión a la base de datos pre-creada (ej. en cPanel)
         try {
-            $dsn = "mysql:host={$_POST['db_host']};dbname={$_POST['db_name']};charset=utf8mb4";
+            $dsn = \Core\Database::dsnFromConfig($_SESSION['db_config']);
             $pdo = new PDO($dsn, $_POST['db_user'], $_POST['db_pass']);
             $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
             
@@ -72,7 +86,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         // Ejecutar Migraciones
         try {
             $db = $_SESSION['db_config'];
-            $pdo = new PDO("mysql:host={$db['host']};dbname={$db['name']};charset=utf8mb4", $db['user'], $db['pass']);
+            $dsn = \Core\Database::dsnFromConfig($db);
+            $pdo = new PDO($dsn, $db['user'], $db['pass']);
             $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 
             $sql = "
@@ -339,8 +354,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         try {
             $db = $_SESSION['db_config'];
             $biz = $_SESSION['business_config'];
-            $pdo = new PDO("mysql:host={$db['host']};dbname={$db['name']};charset=utf8mb4", $db['user'], $db['pass']);
-            
+            $dsn = \Core\Database::dsnFromConfig($db);
+            $pdo = new PDO($dsn, $db['user'], $db['pass']);
+            $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+
             // Insertar admin
             $passHash = password_hash($_POST['admin_pass'], PASSWORD_BCRYPT);
             $stmt = $pdo->prepare("
@@ -427,6 +444,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     <h2>Paso 2: Base de Datos</h2>
                     <form action="install.php?step=2" method="POST">
                         <div class="form-group"><label>Host</label><input type="text" name="db_host" value="localhost"></div>
+                        <div class="form-group"><label>Puerto (opcional)</label><input type="text" name="db_port" placeholder="3306" pattern="[0-9]*" inputmode="numeric" autocomplete="off"></div>
                         <div class="form-group"><label>Nombre DB</label><input type="text" name="db_name" required></div>
                         <div class="form-group"><label>Usuario</label><input type="text" name="db_user" required></div>
                         <div class="form-group"><label>Contraseña</label><input type="password" name="db_pass"></div>

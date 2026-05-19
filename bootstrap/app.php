@@ -7,7 +7,16 @@ if (!defined('ROOT_PATH')) {
     define('ROOT_PATH', dirname(__DIR__));
 }
 
+// Parametros de cookie de sesion deben aplicarse antes de session_start()
 if (session_status() === PHP_SESSION_NONE) {
+    ini_set('session.cookie_httponly', '1');
+    ini_set('session.use_strict_mode', '1');
+    $https = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off')
+        || (!empty($_SERVER['HTTP_X_FORWARDED_PROTO']) && $_SERVER['HTTP_X_FORWARDED_PROTO'] === 'https')
+        || (string) ($_SERVER['SERVER_PORT'] ?? '') === '443';
+    if ($https) {
+        ini_set('session.cookie_secure', '1');
+    }
     session_start();
 }
 
@@ -81,14 +90,3 @@ $timezone = \Core\Config::get('timezone', 'America/Santiago');
 if ($timezone) {
     date_default_timezone_set($timezone);
 }
-
-// Seguridad de sesión
-if (session_status() === PHP_SESSION_NONE) {
-    ini_set('session.cookie_httponly', '1');
-    ini_set('session.use_strict_mode', '1');
-    if (!empty($_SERVER['HTTPS']) || ($_SERVER['SERVER_PORT'] ?? '') === '443') {
-        ini_set('session.cookie_secure', '1');
-    }
-}
-
-// Inicializar utilidades globales aquí

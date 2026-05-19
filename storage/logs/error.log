@@ -1,5 +1,0 @@
-[2026-05-04 04:48:52] ERROR: Uncaught Exception: Database configuration not found. {"file":"\/home\/pccurico\/facturador.pccurico.cl\/Core\/Database.php","line":19}
-[2026-05-04 04:49:43] ERROR: Uncaught Exception: Database configuration not found. {"file":"\/home\/pccurico\/facturador.pccurico.cl\/Core\/Database.php","line":19}
-[2026-05-04 05:05:37] ERROR: Uncaught Exception: Database configuration not found. {"file":"\/home\/pccurico\/facturador.pccurico.cl\/Core\/Database.php","line":19}
-[2026-05-04 05:08:13] ERROR: Uncaught Exception: Database configuration not found. {"file":"\/home\/pccurico\/facturador.pccurico.cl\/Core\/Database.php","line":19}
-[2026-05-06 00:22:42] ERROR: Uncaught Exception: Connection failed: SQLSTATE[HY000] [1045] Access denied for user 'pccurico_facturador'@'localhost' (using password: YES) {"file":"C:\\Users\\JCares\\Documents\\facturador-pccurico\\Core\\Database.php","line":30}

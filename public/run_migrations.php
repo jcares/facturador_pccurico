@@ -457,7 +457,6 @@ function runDatabaseMigrations(): array
 }
 
 if (basename($_SERVER['SCRIPT_FILENAME'] ?? '') === basename(__FILE__)) {
-    session_start();
     require_once __DIR__ . '/../bootstrap/app.php';
 
     if (!\Core\Auth::check()) {

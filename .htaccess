@@ -1,12 +1,25 @@
 <IfModule mod_rewrite.c>
     RewriteEngine On
 
-    # Bloquear acceso web directo a codigo, configuracion, logs, backups y artefactos sensibles.
+    # =========================
+    # PROTECCIÓN DE ARCHIVOS SENSIBLES
+    # =========================
     RewriteRule ^(\.env|\.env\..*|composer\.(json|lock)|package(-lock)?\.json|build\.ps1|cpanel_release\.zip)$ - [F,L,NC]
+
+    # Bloquear acceso directo a backend y carpetas críticas
     RewriteRule ^(app|bootstrap|config|Core|Modules|routes|storage|templates)(/|$) - [F,L,NC]
+
+    # Bloquear backups, logs y archivos sensibles
     RewriteRule (^|/)(error\.log|installed\.lock|.*\.(sql|sqlite|bak|backup|zip|tar|gz|env|ini|log))$ - [F,L,NC]
 
-    # URL raíz → enviar a public/index.php directamente
+    # =========================
+    # FRONT CONTROLLER (PUBLIC)
+    # =========================
+
+    # Evitar reescritura si ya estamos en /public
+    RewriteCond %{REQUEST_URI} !^/public/
+
+    # URL raíz → public/index.php
     RewriteRule ^$ public/index.php [L]
 
     # Si el archivo o carpeta existe, servirlo directamente
@@ -14,12 +27,18 @@
     RewriteCond %{REQUEST_FILENAME} -d
     RewriteRule ^ - [L]
 
-    # Redirigir todo lo demas a public/
+    # Redirigir todo lo demás a /public
     RewriteRule ^(.*)$ public/$1 [L,QSA]
+
 </IfModule>
 
-# Forzar UTF-8 en HTML y assets de texto para evitar mojibake en navegadores/proxies.
+# =========================
+# CONFIGURACIÓN GENERAL
+# =========================
+
+# Forzar UTF-8 en respuestas
 AddDefaultCharset UTF-8
+
 AddType "text/html; charset=UTF-8" .html .htm .php
 AddType "text/css; charset=UTF-8" .css
 AddType "text/javascript; charset=UTF-8" .js
@@ -27,3 +46,10 @@ AddType "application/json; charset=UTF-8" .json
 
 # Deshabilitar listado de directorios
 Options -Indexes
+
+# php -- BEGIN cPanel-generated handler, do not edit
+# Set the “ea-php82” package as the default “PHP” programming language.
+<IfModule mime_module>
+  AddHandler application/x-httpd-ea-php82 .php .php8 .phtml
+</IfModule>
+# php -- END cPanel-generated handler, do not edit

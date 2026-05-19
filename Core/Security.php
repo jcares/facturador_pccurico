@@ -81,6 +81,11 @@ class Security
         return is_numeric($value) ? (float)$value : (float)$default;
     }
 
+    public static function cleanFloat($value, $default = 0)
+    {
+        return self::cleanDecimal($value, $default);
+    }
+
     public static function cleanInt($value, $default = 0)
     {
         return filter_var($value, FILTER_VALIDATE_INT) !== false ? (int)$value : (int)$default;

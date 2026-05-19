@@ -1,0 +1,30 @@
+[12-May-2026 09:43:34 America/Santiago] PHP Warning:  require_once(/home/pccurico/facturador.pccurico.cl/Core/Database.php): Failed to open stream: No such file or directory in /home/pccurico/facturador.pccurico.cl/public/install.php on line 22
+[12-May-2026 09:43:34 America/Santiago] PHP Fatal error:  Uncaught Error: Failed opening required '/home/pccurico/facturador.pccurico.cl/Core/Database.php' (include_path='.:/opt/cpanel/ea-php81/root/usr/share/pear') in /home/pccurico/facturador.pccurico.cl/public/install.php:22
+Stack trace:
+#0 {main}
+  thrown in /home/pccurico/facturador.pccurico.cl/public/install.php on line 22
+[12-May-2026 09:44:18 America/Santiago] PHP Warning:  require_once(/home/pccurico/facturador.pccurico.cl/Core/Database.php): Failed to open stream: No such file or directory in /home/pccurico/facturador.pccurico.cl/public/install.php on line 22
+[12-May-2026 09:44:18 America/Santiago] PHP Fatal error:  Uncaught Error: Failed opening required '/home/pccurico/facturador.pccurico.cl/Core/Database.php' (include_path='.:/opt/cpanel/ea-php81/root/usr/share/pear') in /home/pccurico/facturador.pccurico.cl/public/install.php:22
+Stack trace:
+#0 {main}
+  thrown in /home/pccurico/facturador.pccurico.cl/public/install.php on line 22
+[12-May-2026 09:44:19 America/Santiago] PHP Warning:  require_once(/home/pccurico/facturador.pccurico.cl/Core/Database.php): Failed to open stream: No such file or directory in /home/pccurico/facturador.pccurico.cl/public/install.php on line 22
+[12-May-2026 09:44:19 America/Santiago] PHP Fatal error:  Uncaught Error: Failed opening required '/home/pccurico/facturador.pccurico.cl/Core/Database.php' (include_path='.:/opt/cpanel/ea-php81/root/usr/share/pear') in /home/pccurico/facturador.pccurico.cl/public/install.php:22
+Stack trace:
+#0 {main}
+  thrown in /home/pccurico/facturador.pccurico.cl/public/install.php on line 22
+[12-May-2026 09:44:20 America/Santiago] PHP Warning:  require_once(/home/pccurico/facturador.pccurico.cl/Core/Database.php): Failed to open stream: No such file or directory in /home/pccurico/facturador.pccurico.cl/public/install.php on line 22
+[12-May-2026 09:44:20 America/Santiago] PHP Fatal error:  Uncaught Error: Failed opening required '/home/pccurico/facturador.pccurico.cl/Core/Database.php' (include_path='.:/opt/cpanel/ea-php81/root/usr/share/pear') in /home/pccurico/facturador.pccurico.cl/public/install.php:22
+Stack trace:
+#0 {main}
+  thrown in /home/pccurico/facturador.pccurico.cl/public/install.php on line 22
+[12-May-2026 09:44:21 America/Santiago] PHP Warning:  require_once(/home/pccurico/facturador.pccurico.cl/Core/Database.php): Failed to open stream: No such file or directory in /home/pccurico/facturador.pccurico.cl/public/install.php on line 22
+[12-May-2026 09:44:21 America/Santiago] PHP Fatal error:  Uncaught Error: Failed opening required '/home/pccurico/facturador.pccurico.cl/Core/Database.php' (include_path='.:/opt/cpanel/ea-php81/root/usr/share/pear') in /home/pccurico/facturador.pccurico.cl/public/install.php:22
+Stack trace:
+#0 {main}
+  thrown in /home/pccurico/facturador.pccurico.cl/public/install.php on line 22
+[12-May-2026 09:44:25 America/Santiago] PHP Warning:  require_once(/home/pccurico/facturador.pccurico.cl/Core/Database.php): Failed to open stream: No such file or directory in /home/pccurico/facturador.pccurico.cl/public/install.php on line 22
+[12-May-2026 09:44:25 America/Santiago] PHP Fatal error:  Uncaught Error: Failed opening required '/home/pccurico/facturador.pccurico.cl/Core/Database.php' (include_path='.:/opt/cpanel/ea-php81/root/usr/share/pear') in /home/pccurico/facturador.pccurico.cl/public/install.php:22
+Stack trace:
+#0 {main}
+  thrown in /home/pccurico/facturador.pccurico.cl/public/install.php on line 22

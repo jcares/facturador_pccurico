@@ -2,10 +2,10 @@
 ob_start();
 
 $current = basename($_SERVER['PHP_SELF'] ?? '');
-$currentAction = $_GET['action'] ?? '';
-$isActive = function (array $files, ?string $action = null) use ($current, $currentAction) {
-    if ($action !== null) {
-        return ($current === 'invoices.php' && $currentAction === $action) ? 'active' : '';
+$currentSection = $_GET['section'] ?? '';
+$isActive = function (array $files, ?string $section = null) use ($current, $currentSection) {
+    if ($section !== null) {
+        return ($current === 'settings.php' && $currentSection === $section) ? 'active' : '';
     }
     return in_array($current, $files, true) ? 'active' : '';
 };
@@ -16,7 +16,7 @@ $user = \Core\Auth::user();
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title><?= htmlspecialchars($title ?? 'Resumen General') ?> | FACTURADOR-PCCURICO</title>
+    <title><?= htmlspecialchars($title ?? 'Configuración') ?> | FACTURADOR-PCCURICO</title>
     <link rel="icon" type="image/png" href="/assets/img/favicon.png">
     <link rel="stylesheet" href="/assets/css/style.css?v=<?= time() ?>">
     <link rel="stylesheet" href="/assets/css/style_mobile.css?v=<?= time() ?>">
@@ -83,12 +83,12 @@ $user = \Core\Auth::user();
                     <i data-lucide="chevron-down"></i>
                 </button>
                 <div class="nav-submenu <?= in_array($current, ['settings.php', 'templates.php', 'tools.php']) ? 'open' : '' ?>" id="settings-menu">
-                    <a href="settings.php?section=company" class="nav-sub-link">Empresa</a>
-                    <a href="settings.php?section=transbank" class="nav-sub-link">Transbank (Webpay)</a>
-                    <a href="settings.php?section=email" class="nav-sub-link">Correo</a>
-                    <a href="templates.php" class="nav-sub-link">Plantilla Factura</a>
-                    <a href="tools.php?action=log" class="nav-sub-link">Logs de Sistema</a>
-                    <a href="tools.php" class="nav-sub-link">Importar/Exportar</a>
+                    <a href="settings.php?section=company" class="nav-sub-link <?= $isActive(['settings.php'], 'company') ?>">Empresa</a>
+                    <a href="settings.php?section=transbank" class="nav-sub-link <?= $isActive(['settings.php'], 'transbank') ?>">Transbank (Webpay)</a>
+                    <a href="settings.php?section=email" class="nav-sub-link <?= $isActive(['settings.php'], 'email') ?>">Correo</a>
+                    <a href="templates.php" class="nav-sub-link <?= $isActive(['templates.php']) ?>">Plantilla Factura</a>
+                    <a href="tools.php?action=log" class="nav-sub-link <?= $current === 'tools.php' && ($_GET['action'] ?? '') === 'log' ? 'active' : '' ?>">Logs de Sistema</a>
+                    <a href="tools.php" class="nav-sub-link <?= $current === 'tools.php' && !isset($_GET['action']) ? 'active' : '' ?>">Importar/Exportar</a>
                 </div>
 
                 <div class="nav-section nav-bottom">
@@ -102,12 +102,9 @@ $user = \Core\Auth::user();
         <main class="main-content">
             <header class="main-header">
                 <div class="header-branding">
-                    <h2 class="page-title"><?= htmlspecialchars($title ?? 'Resumen General') ?></h2>
+                    <h2 class="page-title"><?= htmlspecialchars($title ?? 'Configuración') ?></h2>
                 </div>
                 <div class="header-actions">
-                    <a href="invoices.php?action=create" class="header-quick-action">
-                        <i data-lucide="scan-barcode"></i> <span>Nueva venta</span>
-                    </a>
                     <div class="user-info">
                         <div class="user-name"><?= htmlspecialchars($user['name'] ?? 'Admin') ?></div>
                         <div class="user-role">Administrador</div>
@@ -127,7 +124,6 @@ $user = \Core\Auth::user();
         </main>
     </div>
 
-    <!-- Mobile Navigation -->
     <nav class="mobile-nav">
         <button class="mobile-nav-toggle" id="mobile-nav-toggle">
             <i data-lucide="menu"></i>
@@ -194,12 +190,12 @@ $user = \Core\Auth::user();
                 <i data-lucide="chevron-down"></i>
             </button>
             <div class="mobile-menu-submenu <?= in_array($current, ['settings.php', 'templates.php', 'tools.php']) ? 'open' : '' ?>" id="mobile-settings-menu">
-                <a href="settings.php?section=company" class="mobile-menu-sub-link">Empresa</a>
-                <a href="settings.php?section=transbank" class="mobile-menu-sub-link">Transbank (Webpay)</a>
-                <a href="settings.php?section=email" class="mobile-menu-sub-link">Correo</a>
-                <a href="templates.php" class="mobile-menu-sub-link">Plantilla Factura</a>
-                <a href="tools.php?action=log" class="mobile-menu-sub-link">Logs de Sistema</a>
-                <a href="tools.php" class="mobile-menu-sub-link">Importar/Exportar</a>
+                <a href="settings.php?section=company" class="mobile-menu-sub-link <?= $isActive(['settings.php'], 'company') ?>">Empresa</a>
+                <a href="settings.php?section=transbank" class="mobile-menu-sub-link <?= $isActive(['settings.php'], 'transbank') ?>">Transbank (Webpay)</a>
+                <a href="settings.php?section=email" class="mobile-menu-sub-link <?= $isActive(['settings.php'], 'email') ?>">Correo</a>
+                <a href="templates.php" class="mobile-menu-sub-link <?= $isActive(['templates.php']) ?>">Plantilla Factura</a>
+                <a href="tools.php?action=log" class="mobile-menu-sub-link <?= $current === 'tools.php' && ($_GET['action'] ?? '') === 'log' ? 'active' : '' ?>">Logs de Sistema</a>
+                <a href="tools.php" class="mobile-menu-sub-link <?= $current === 'tools.php' && !isset($_GET['action']) ? 'active' : '' ?>">Importar/Exportar</a>
             </div>
 
             <div class="mobile-menu-bottom">
@@ -248,9 +244,28 @@ $user = \Core\Auth::user();
 
         if (window.lucide) {
             lucide.createIcons();
-            // Refresh icons more aggressively to ensure visibility
             setTimeout(() => lucide.createIcons(), 500);
             setTimeout(() => lucide.createIcons(), 2000);
+        }
+
+        // Global Toast Notification Helper
+        class Toast {
+            static show(message, type = 'info', duration = 4000) {
+                const toast = document.createElement('div');
+                toast.className = `toast toast-${type}`;
+                toast.innerHTML = `<div class="toast-content"><i data-lucide="${type === 'success' ? 'check-circle' : (type === 'error' ? 'alert-octagon' : 'info')}"></i><span>${message}</span></div>`;
+                document.body.appendChild(toast);
+                if (window.lucide) lucide.createIcons();
+                
+                requestAnimationFrame(() => {
+                    toast.classList.add('show');
+                });
+
+                setTimeout(() => {
+                    toast.classList.remove('show');
+                    setTimeout(() => toast.remove(), 500);
+                }, duration);
+            }
         }
     </script>
 </body>

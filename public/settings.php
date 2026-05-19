@@ -1,7 +1,9 @@
 <?php
+
 require_once __DIR__ . '/../bootstrap/app.php';
 
 use Core\Auth;
+use Core\Security;
 use Modules\Settings\SettingsController;
 
 if (!Auth::check()) {
@@ -9,13 +11,26 @@ if (!Auth::check()) {
     exit;
 }
 
-\Core\Security::validatePost();
-
 $controller = new SettingsController();
+
 $action = $_GET['action'] ?? 'index';
 
-if ($action === 'update') {
-    $controller->update();
-} else {
-    $controller->index();
+switch ($action) {
+
+    case 'update':
+        Security::validatePost();
+        $controller->update();
+        break;
+
+    case 'test_transbank':
+        $controller->test_transbank();
+        break;
+
+    case 'test_email':
+        $controller->test_email();
+        break;
+
+    default:
+        $controller->index();
+        break;
 }

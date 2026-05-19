@@ -21,6 +21,17 @@ $router->add('dashboard', function () {
     $stmt = $db->query("SELECT COUNT(id) as total_clients FROM clients");
     $totalClients = $stmt->fetch()['total_clients'] ?? 0;
 
+    $activeRecurrences = 0;
+    $nextRecurrenceDate = null;
+    try {
+        $stmt = $db->query("SELECT COUNT(*) as c FROM recurring_invoices WHERE status = 'active'");
+        $activeRecurrences = (int) ($stmt->fetch()['c'] ?? 0);
+        $stmt = $db->query("SELECT MIN(next_run_date) AS d FROM recurring_invoices WHERE status = 'active' AND next_run_date IS NOT NULL");
+        $nextRecurrenceDate = $stmt->fetch()['d'] ?? null;
+    } catch (\Throwable $e) {
+        // Tabla opcional o no migrada
+    }
+
     // Data for Sales Chart (Last 6 Months)
     $stmt = $db->query("
         SELECT DATE_FORMAT(created_at, '%Y-%m') as month, SUM(total) as total 
@@ -35,10 +46,14 @@ $router->add('dashboard', function () {
     $salesTotals = [];
     foreach ($salesDataRaw as $row) {
         // Convert 'YYYY-MM' to a more readable format, e.g., 'Mes YYYY'
-        $dateObj = DateTime::createFromFormat('Y-m', $row['month']);
+        $dateObj = DateTime::createFromFormat('Y-m', (string) ($row['month'] ?? ''));
         $meses = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
-        $monthName = $meses[(int)$dateObj->format('n') - 1] . ' ' . $dateObj->format('Y');
-        
+        if ($dateObj) {
+            $monthName = $meses[(int) $dateObj->format('n') - 1] . ' ' . $dateObj->format('Y');
+        } else {
+            $monthName = (string) ($row['month'] ?? '');
+        }
+
         $salesMonths[] = $monthName;
         $salesTotals[] = (float) $row['total'];
     }
@@ -68,7 +83,9 @@ $router->add('dashboard', function () {
         'stats' => [
             'month_total' => $monthTotal,
             'total_docs' => $totalDocs,
-            'total_clients' => $totalClients
+            'total_clients' => $totalClients,
+            'active_recurrences' => $activeRecurrences,
+            'next_recurrence_date' => $nextRecurrenceDate,
         ],
         'charts' => [
             'sales' => [

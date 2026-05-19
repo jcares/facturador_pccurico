@@ -45,7 +45,7 @@ class ExpenseController extends Controller
 
             // Handle file upload for receipt
             if (isset($_FILES['receipt']) && $_FILES['receipt']['error'] === UPLOAD_ERR_OK) {
-                $uploadDir = '../storage/uploads/receipts/';
+                $uploadDir = ROOT_PATH . '/storage/uploads/receipts/';
                 if (!is_dir($uploadDir)) {
                     mkdir($uploadDir, 0755, true);
                 }
@@ -99,7 +99,7 @@ class ExpenseController extends Controller
 
             // Handle file upload for receipt
             if (isset($_FILES['receipt']) && $_FILES['receipt']['error'] === UPLOAD_ERR_OK) {
-                $uploadDir = '../storage/uploads/receipts/';
+                $uploadDir = ROOT_PATH . '/storage/uploads/receipts/';
                 if (!is_dir($uploadDir)) {
                     mkdir($uploadDir, 0755, true);
                 }

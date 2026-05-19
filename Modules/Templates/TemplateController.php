@@ -6,6 +6,7 @@ use Core\Database;
 use Core\View;
 use Core\Logger;
 use Core\Security;
+use Core\VisualTemplateRenderer;
 
 class TemplateController extends Controller
 {
@@ -27,7 +28,7 @@ class TemplateController extends Controller
             return $t;
         }, $templates);
 
-        View::render('templates/index', ['templates' => $templates, 'title' => 'Diseno de factura']);
+        View::renderSettings('templates/index', ['templates' => $templates, 'title' => 'Diseno de factura']);
     }
 
     public function visualEdit()
@@ -35,7 +36,7 @@ class TemplateController extends Controller
         $id = intval($_GET['id'] ?? 0);
         if ($id <= 0) {
             http_response_code(404);
-            echo 'ID de plantilla invalido.';
+            echo 'ID de plantilla invalida.';
             exit;
         }
 
@@ -54,10 +55,11 @@ class TemplateController extends Controller
         $styles = $config['styles'] ?? ['primary_color' => '#3b82f6', 'font_family' => 'sans-serif'];
 
         ob_start();
-        include __DIR__ . '/../../templates/templates/visual_edit.php';
+        include __DIR__ . '/visual_edit.php';
         $content = ob_get_clean();
 
-        View::renderRaw($content, ['title' => 'Editor Visual de Plantilla']);
+        View::renderRaw($content, ['title' => 'Editor Visual de Plantilla - #' . $id, '_layout' => 'settings_layout']);
+        exit;
     }
 
     public function previewVisual()
@@ -65,6 +67,12 @@ class TemplateController extends Controller
         if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
             http_response_code(405);
             echo 'Metodo no permitido.';
+            return;
+        }
+
+        if (!Security::validateCsrfToken($_POST['csrf_token'] ?? '')) {
+            http_response_code(403);
+            echo 'Token de seguridad invalido.';
             return;
         }
 
@@ -80,6 +88,7 @@ class TemplateController extends Controller
             $block['id'] = htmlspecialchars($block['id'] ?? '');
             $block['label'] = htmlspecialchars($block['label'] ?? '');
         }
+        unset($block);
 
         $primaryColor = $_POST['primary_color'] ?? '#3b82f6';
         if (!preg_match('/^#[0-9a-f]{6}$/i', $primaryColor)) {
@@ -88,43 +97,35 @@ class TemplateController extends Controller
 
         $styles = [
             'primary_color' => $primaryColor,
-            'font_family' => htmlspecialchars($_POST['font_family'] ?? 'sans-serif')
+            'font_family' => htmlspecialchars($_POST['font_family'] ?? 'sans-serif'),
         ];
 
         $config = ['blocks' => $blocks, 'styles' => $styles];
 
-        // Load real settings from DB so webpay image/text are available
-        $realSettings = \Core\Config::getAll();
+        $db = Database::getInstance();
+        $stmt = $db->query('SELECT * FROM settings');
+        $settingsRows = $stmt->fetchAll();
+        $settings = [];
+        foreach ($settingsRows as $row) {
+            $settings[$row['key']] = $row['value'];
+        }
 
         $data = [
-            'settings' => array_merge([
-                'biz_name' => 'Comercializadora Demo SPA',
-                'biz_rut' => '76.123.456-7',
-                'biz_address' => 'Av. Providencia 1234, Santiago',
-                'biz_logo' => ''
-            ], $realSettings),
-            'client' => [
-                'name' => 'Juan Perez y Cia Ltda.',
-                'rut' => '77.888.999-0',
-                'address' => 'Calle Falsa 123, Valparaiso'
-            ],
+            'settings' => $settings,
+            'client' => ['name' => 'Cliente Demo', 'rut' => '12.345.678-9', 'address' => 'Direccion de ejemplo'],
             'invoice' => [
-                'number' => 10042,
-                'created_at' => date('Y-m-d'),
-                'subtotal' => 50000,
-                'tax' => 9500,
-                'total' => 59500,
-                'notes' => "Gracias por su compra.\nCondiciones de pago a 30 dias.",
-                'public_url' => 'https://facturador.pccurico.cl/view.php?token=demo'
+                'number' => 'FAC-001',
+                'created_at' => date('Y-m-d H:i:s'),
+                'due_date' => date('Y-m-d', strtotime('+30 days')),
             ],
             'items' => [
-                ['sku' => 'ITM01', 'name' => 'Servicio de Consultoria', 'quantity' => 1, 'price' => 30000, 'subtotal' => 30000],
-                ['sku' => 'ITM02', 'name' => 'Licencia de Software', 'quantity' => 2, 'price' => 10000, 'subtotal' => 20000],
-            ]
+                ['sku' => 'SKU1', 'name' => 'Producto de muestra', 'quantity' => 2, 'price' => 15000, 'subtotal' => 30000],
+            ],
         ];
 
-        require_once __DIR__ . '/../../Core/VisualTemplateRenderer.php';
-        echo \Core\VisualTemplateRenderer::render($config, $data);
+        header('Content-Type: text/html; charset=utf-8');
+        echo VisualTemplateRenderer::render($config, $data);
+        exit;
     }
 
     public function saveVisual()
@@ -138,7 +139,7 @@ class TemplateController extends Controller
         $id = intval($_GET['id'] ?? 0);
         if ($id <= 0) {
             http_response_code(404);
-            echo 'ID de plantilla invalido.';
+            echo 'ID de plantilla invalida.';
             exit;
         }
 

@@ -22,30 +22,30 @@ $renderProductOptions = static function () use ($productData): void {
 };
 ?>
 
-<div class="glass-card pos-card" style="max-width: 1080px; margin: 0 auto;">
-    <div class="flex-between" style="margin-bottom: 30px; border-bottom: 1px solid var(--glass-border); padding-bottom: 20px;">
-        <h2 style="font-weight: 800; margin: 0;">Nueva Venta</h2>
-        <div style="display: flex; gap: 10px; flex-wrap: wrap; justify-content: flex-end;">
-            <a href="invoices.php" class="btn-secondary" style="text-decoration: none;">Cancelar</a>
-            <button type="submit" form="invoice-form" name="save_action" value="save" class="btn-primary" style="width: auto; margin-top: 0; padding: 10px 20px;">Solo Guardar</button>
-            <button type="submit" form="invoice-form" name="save_action" value="send" class="btn-primary" style="width: auto; margin-top: 0; padding: 10px 20px; background: var(--success, #10b981);">Guardar y Enviar</button>
+<div class="glass-card pos-card max-w-1080 m-auto">
+    <div class="flex-between mb-20 border-b pb-20">
+        <h2 class="font-800 m-0">Nueva Venta</h2>
+        <div class="d-flex gap-10 flex-wrap justify-end">
+            <a href="invoices.php" class="btn-secondary">Cancelar</a>
+            <button type="submit" form="invoice-form" name="save_action" value="save" class="btn-primary">Solo Guardar</button>
+            <button type="submit" form="invoice-form" name="save_action" value="send" class="btn-success">Guardar y Enviar</button>
         </div>
     </div>
 
     <?php if (empty($clients)): ?>
-        <div class="alert alert-warning">No hay clientes disponibles. Crea un cliente antes de vender.</div>
+        <div class="alert alert-error">No hay clientes disponibles. Crea un cliente antes de vender.</div>
     <?php endif; ?>
 
     <?php if (empty($productData)): ?>
-        <div class="alert alert-warning">No hay productos disponibles. Crea productos antes de vender.</div>
+        <div class="alert alert-error">No hay productos disponibles. Crea productos antes de vender.</div>
     <?php endif; ?>
 
     <form action="invoices.php?action=store" method="POST" id="invoice-form" novalidate>
         <?= \Core\Security::csrfField() ?>
 
-        <div class="main-grid" style="display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 32px; margin-bottom: 32px;">
+        <div class="form-row mb-20">
             <section>
-                <h3 style="font-size: 1rem; color: var(--text-muted); margin-bottom: 15px;">Datos del Cliente</h3>
+                <h3 class="section-subtitle">Datos del Cliente</h3>
                 <div class="form-group">
                     <label for="client-id">Seleccionar Cliente</label>
                     <select name="client_id" id="client-id" class="form-control" required>
@@ -60,8 +60,8 @@ $renderProductOptions = static function () use ($productData): void {
             </section>
 
             <section>
-                <h3 style="font-size: 1rem; color: var(--text-muted); margin-bottom: 15px;">Detalles del Documento</h3>
-                <div class="flex-responsive" style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px;">
+                <h3 class="section-subtitle">Detalles del Documento</h3>
+                <div class="form-row">
                     <div class="form-group">
                         <label for="invoice-currency">Moneda Base</label>
                         <select name="currency" id="invoice-currency" class="form-control">
@@ -69,84 +69,84 @@ $renderProductOptions = static function () use ($productData): void {
                             <option value="USD">USD</option>
                             <option value="UF">UF</option>
                         </select>
-                        <small id="rate-hint" style="display: block; color: var(--text-muted); margin-top: 6px;"></small>
+                        <small id="rate-hint" class="form-help"></small>
                     </div>
                     <div class="form-group">
                         <label for="due-date">Vencimiento</label>
-                        <input type="date" name="due_date" id="due-date" value="<?= date('Y-m-d', strtotime('+30 days')) ?>">
+                        <input type="date" name="due_date" id="due-date" class="form-control" value="<?= date('Y-m-d', strtotime('+30 days')) ?>">
                     </div>
                     <div class="form-group">
-                        <label for="issue-date">Emision</label>
-                        <input type="date" name="issue_date" id="issue-date" value="<?= date('Y-m-d') ?>" required>
+                        <label for="issue-date">Emisión</label>
+                        <input type="date" name="issue_date" id="issue-date" class="form-control" value="<?= date('Y-m-d') ?>" required>
                     </div>
                 </div>
             </section>
         </div>
 
-        <section style="border: 1px solid var(--glass-border); background: rgba(255,255,255,0.03); border-radius: 12px; padding: 18px; margin-bottom: 28px;">
-            <label style="display: flex; align-items: center; gap: 12px; margin: 0; color: var(--text-main); font-weight: 700;">
-                <input type="checkbox" name="make_recurring" id="make-recurring" value="1" style="width: 18px; height: 18px; accent-color: var(--primary);">
+        <section class="config-panel">
+            <label class="config-toggle-lbl">
+                <input type="checkbox" name="make_recurring" id="make-recurring" value="1" class="check-lg">
                 Crear como factura recurrente
             </label>
-            <div id="recurring-panel" style="display: none; margin-top: 18px;">
-                <div class="flex-responsive" style="display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 16px;">
-                    <div class="form-group" style="margin-bottom: 0;">
+            <div id="recurring-panel" class="mt-20" style="display: none;">
+                <div class="form-row">
+                    <div class="form-group">
                         <label for="recurring-frequency">Frecuencia</label>
-                        <select name="recurring_frequency" id="recurring-frequency">
+                        <select name="recurring_frequency" id="recurring-frequency" class="form-control">
                             <option value="monthly">Mensual</option>
                             <option value="weekly">Semanal</option>
                             <option value="quarterly">Trimestral</option>
                             <option value="yearly">Anual</option>
                         </select>
                     </div>
-                    <div class="form-group" style="margin-bottom: 0;">
+                    <div class="form-group">
                         <label for="recurring-start-date">Primera recurrencia</label>
-                        <input type="date" name="recurring_start_date" id="recurring-start-date" value="<?= date('Y-m-d', strtotime('+1 month')) ?>">
+                        <input type="date" name="recurring_start_date" id="recurring-start-date" class="form-control" value="<?= date('Y-m-d', strtotime('+1 month')) ?>">
                     </div>
-                    <div class="form-group" style="margin-bottom: 0;">
-                        <label for="recurring-due-days">Dias para vencer</label>
-                        <input type="number" name="recurring_due_days" id="recurring-due-days" value="30" min="0" max="365">
+                    <div class="form-group">
+                        <label for="recurring-due-days">Días para vencer</label>
+                        <input type="number" name="recurring_due_days" id="recurring-due-days" class="form-control" value="30" min="0" max="365">
                     </div>
-                    <div class="form-group" style="margin-bottom: 0;">
+                    <div class="form-group">
                         <label for="recurring-remaining-cycles">Ciclos restantes</label>
-                        <input type="number" name="recurring_remaining_cycles" id="recurring-remaining-cycles" min="1" placeholder="Sin limite">
+                        <input type="number" name="recurring_remaining_cycles" id="recurring-remaining-cycles" class="form-control" min="1" placeholder="Sin límite">
                     </div>
                 </div>
             </div>
         </section>
 
-        <h3 style="font-size: 1rem; color: var(--text-muted); margin-bottom: 15px;">Lineas de Detalle</h3>
-        <div class="table-container invoice-items-container">
-            <table id="items-table" style="width: 100%; border-collapse: collapse; margin-bottom: 18px;">
+        <h3 class="section-subtitle">Líneas de Detalle</h3>
+        <div class="table-container mb-20">
+            <table id="items-table" class="table-clean">
                 <thead>
-                    <tr style="border-bottom: 1px solid var(--glass-border);">
-                        <th style="padding: 12px 0; text-align: left; color: var(--text-muted); min-width: 260px;">Producto</th>
-                        <th style="padding: 12px; text-align: right; color: var(--text-muted); width: 110px;">Cantidad</th>
-                        <th style="padding: 12px; text-align: right; color: var(--text-muted); width: 160px;">Precio Neto</th>
-                        <th style="padding: 12px; text-align: right; color: var(--text-muted); width: 160px;">Total</th>
-                        <th style="width: 52px;"></th>
+                    <tr>
+                        <th>Producto</th>
+                        <th class="text-right w-110">Cantidad</th>
+                        <th class="text-right w-160">Precio Neto</th>
+                        <th class="text-right w-160">Total</th>
+                        <th class="w-52"></th>
                     </tr>
                 </thead>
                 <tbody id="items-body">
-                    <tr class="invoice-item-row" style="border-bottom: 1px solid rgba(255,255,255,0.05);">
-                        <td style="padding: 12px 0;">
-                            <select name="product_id[]" class="form-control prod-select" aria-label="Producto de la linea">
+                    <tr class="invoice-item-row">
+                        <td>
+                            <select name="product_id[]" class="form-control prod-select" aria-label="Producto de la línea">
                                 <?php $renderProductOptions(); ?>
                             </select>
-                            <div class="row-rate-display" style="font-size: 0.72rem; color: var(--text-muted); margin-top: 6px;"></div>
+                            <div class="row-rate-display"></div>
                         </td>
-                        <td style="padding: 12px;">
-                            <input type="number" name="qty[]" value="1" min="0.01" step="0.01" class="form-control qty-input" aria-label="Cantidad de la linea" style="text-align: right;">
+                        <td>
+                            <input type="number" name="qty[]" value="1" min="0.01" step="0.01" class="form-control qty-input text-right" aria-label="Cantidad de la línea">
                         </td>
-                        <td style="padding: 12px;">
-                            <input type="number" name="price[]" value="0" step="0.01" min="0" class="form-control price-input" aria-label="Precio neto de la linea" style="text-align: right;">
+                        <td>
+                            <input type="number" name="price[]" value="0" step="0.01" min="0" class="form-control price-input text-right" aria-label="Precio neto de la línea">
                         </td>
-                        <td style="padding: 12px; text-align: right;">
-                            <div class="row-total-display" style="font-weight: 700; color: var(--text-main);">$0</div>
+                        <td class="text-right">
+                            <div class="row-total-display highlight">$0</div>
                         </td>
-                        <td style="padding: 12px; text-align: right;">
-                            <button type="button" class="remove-line-btn" aria-label="Eliminar linea" title="Eliminar linea" style="background: none; border: none; color: #ef4444; cursor: pointer; padding: 6px;">
-                                <i data-lucide="trash-2" style="width:16px;"></i>
+                        <td class="text-right">
+                            <button type="button" class="remove-line-btn btn-icon text-danger" aria-label="Eliminar línea" title="Eliminar línea">
+                                <i data-lucide="trash-2" class="icon-md"></i>
                             </button>
                         </td>
                     </tr>
@@ -154,21 +154,21 @@ $renderProductOptions = static function () use ($productData): void {
             </table>
         </div>
 
-        <button type="button" id="add-line-btn" class="btn-secondary" style="width: 100%; margin-bottom: 32px; border-style: dashed; color: var(--primary);">
-            + Anadir Linea
+        <button type="button" id="add-line-btn" class="btn-secondary btn-dashed w-full mb-30">
+            + Añadir Línea
         </button>
 
-        <div style="display: flex; justify-content: flex-end; border-top: 1px solid var(--glass-border); padding-top: 20px;">
-            <div style="width: min(100%, 320px);">
-                <div style="display: flex; justify-content: space-between; margin-bottom: 10px; color: var(--text-muted);">
+        <div class="totals-section">
+            <div class="totals-wrapper">
+                <div class="flex-between mb-10 text-muted">
                     <span>Subtotal Neto</span>
                     <span id="subtotal-display">$0</span>
                 </div>
-                <div style="display: flex; justify-content: space-between; margin-bottom: 10px; color: var(--text-muted);">
+                <div class="flex-between mb-10 text-muted">
                     <span>IVA (19%)</span>
                     <span id="tax-display">$0</span>
                 </div>
-                <div style="display: flex; justify-content: space-between; margin-top: 15px; padding-top: 15px; border-top: 1px solid rgba(255,255,255,0.1); font-size: 1.2rem; font-weight: 800; color: var(--primary);">
+                <div class="flex-between total-row">
                     <span>Total</span>
                     <span id="total-display">$0</span>
                 </div>
@@ -237,24 +237,24 @@ $renderProductOptions = static function () use ($productData): void {
     function createRow() {
         const row = document.createElement('tr');
         row.className = 'invoice-item-row';
-        row.style.borderBottom = '1px solid rgba(255,255,255,0.05)';
+        row.style.borderBottom = '1px solid var(--panel-border)';
         row.innerHTML = `
-            <td style="padding: 12px 0;">
+            <td class="py-12 px-0">
                 <select name="product_id[]" class="form-control prod-select" aria-label="Producto de la linea">${optionHtml()}</select>
-                <div class="row-rate-display" style="font-size: 0.72rem; color: var(--text-muted); margin-top: 6px;"></div>
+                <div class="row-rate-display"></div>
             </td>
-            <td style="padding: 12px;">
-                <input type="number" name="qty[]" value="1" min="0.01" step="0.01" class="form-control qty-input" aria-label="Cantidad de la linea" style="text-align: right;">
+            <td class="p-12">
+                <input type="number" name="qty[]" value="1" min="0.01" step="0.01" class="form-control qty-input text-right" aria-label="Cantidad de la linea">
             </td>
-            <td style="padding: 12px;">
-                <input type="number" name="price[]" value="0" step="0.01" min="0" class="form-control price-input" aria-label="Precio neto de la linea" style="text-align: right;">
+            <td class="p-12">
+                <input type="number" name="price[]" value="0" step="0.01" min="0" class="form-control price-input text-right" aria-label="Precio neto de la linea">
             </td>
-            <td style="padding: 12px; text-align: right;">
-                <div class="row-total-display" style="font-weight: 700; color: var(--text-main);">$0</div>
+            <td class="p-12 text-right">
+                <div class="row-total-display font-700 text-main">$0</div>
             </td>
-            <td style="padding: 12px; text-align: right;">
-                <button type="button" class="remove-line-btn" aria-label="Eliminar linea" title="Eliminar linea" style="background: none; border: none; color: #ef4444; cursor: pointer; padding: 6px;">
-                    <i data-lucide="trash-2" style="width:16px;"></i>
+            <td class="p-12 text-right">
+                <button type="button" class="remove-line-btn btn-icon text-danger p-6" aria-label="Eliminar linea" title="Eliminar linea">
+                    <i data-lucide="trash-2" class="icon-md"></i>
                 </button>
             </td>
         `;

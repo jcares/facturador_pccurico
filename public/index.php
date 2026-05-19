@@ -17,10 +17,7 @@ if (!file_exists(ROOT_PATH . '/storage/installed.lock')) {
 // Bootstrap
 require_once ROOT_PATH . '/bootstrap/app.php';
 
-use Core\Auth;
-use Core\Database;
 use Core\Router;
-use Core\View;
 
 $router = new Router();
 require ROOT_PATH . '/routes/web.php';

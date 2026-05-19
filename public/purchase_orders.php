@@ -1,15 +1,16 @@
 <?php
-require_once '../bootstrap/app.php';
+require_once __DIR__ . '/../bootstrap/app.php';
 
 use Core\Auth;
-use Core\Router;
+use Core\Security;
 use Modules\PurchaseOrders\PurchaseOrderController;
 
-// Verificar autenticación
 if (!Auth::check()) {
     header('Location: login.php');
     exit;
 }
+
+Security::validatePost();
 
 $action = $_GET['action'] ?? 'index';
 $id = $_GET['id'] ?? null;

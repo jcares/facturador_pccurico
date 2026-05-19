@@ -1,5 +1,4 @@
 <?php
-session_start();
 require_once __DIR__ . '/../bootstrap/app.php';
 
 if (!\Core\Auth::check()) {
@@ -7,6 +6,7 @@ if (!\Core\Auth::check()) {
     exit;
 }
 
-\Core\View::render('placeholders/client_portal', [
-    'title' => 'Portal de Clientes',
-]);
+$title = 'Portal de Cliente';
+$contentFile = 'placeholders/client_portal.php';
+
+include __DIR__ . '/../app/views/settings_layout.php';
